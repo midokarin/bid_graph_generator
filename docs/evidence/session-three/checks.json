@@ -1,0 +1,99 @@
+{
+  "environment": {
+    "os": "macOS 26.6.2",
+    "architecture": "arm64",
+    "browser": "Google Chrome 152",
+    "visual_mode": "headless",
+    "viewports": [
+      [
+        1440,
+        900
+      ],
+      [
+        1920,
+        1080
+      ]
+    ],
+    "dpr": 1,
+    "browser_zoom": "100%",
+    "fonts": "system fonts; document.fonts.ready"
+  },
+  "provider": "stub",
+  "real_model_calls": 0,
+  "native_file_observations": {
+    "first_save_system_picker": true,
+    "reopen_from_system_picker": true,
+    "overwrite_revision": 2,
+    "overwrite_versions": 2,
+    "layout_preserved_after_template": true,
+    "save_as_preserved_original": true,
+    "save_as_snapshots_unchanged": true,
+    "beforeunload_warning_observed_and_cancelled": true
+  },
+  "fault_injection": {
+    "delayed_create_response_cancel": "12s delayed response; UI remains example with disabled save; no version created",
+    "save_picker_permission_denied": "unsaved status and v1 retained",
+    "future_99_project": "rejected; unsaved status and v1 retained"
+  },
+  "fallback_download": {
+    "diagram_type": "gantt",
+    "revision": 2,
+    "versions": 2,
+    "dirty_retained": true
+  },
+  "loopback_listeners": {
+    "backend": "127.0.0.1:8010",
+    "frontend": "127.0.0.1:5174",
+    "verified_process_scoped": true
+  },
+  "previous_process_temp_log_deleted": true,
+  "exports": {
+    "stub-flow.png": {
+      "sha256": "add3d1aa08bfed74277d9ee49c301885bed2bf46a71435c94e8b0bdee45b45ff",
+      "bytes": 282482,
+      "dimensions": [
+        2480,
+        3508
+      ]
+    },
+    "stub-flow.svg": {
+      "sha256": "ddb0148c965d8aa149fc200a5fd552e4a13333890aca0463bc4911a8769c61a6",
+      "bytes": 4843
+    },
+    "stub-gantt.png": {
+      "sha256": "518033142e09c4487b49e3688a0942156b8415b66b0d6a29684c8bb388b04c88",
+      "bytes": 458552,
+      "dimensions": [
+        4961,
+        3508
+      ]
+    },
+    "stub-gantt.svg": {
+      "sha256": "89700f7e67bebd66febb1357bbde456a0564392ecdd882719ee3a833a14ff838",
+      "bytes": 5013
+    },
+    "stub-production.png": {
+      "sha256": "add3d1aa08bfed74277d9ee49c301885bed2bf46a71435c94e8b0bdee45b45ff",
+      "bytes": 282482,
+      "dimensions": [
+        2480,
+        3508
+      ]
+    }
+  },
+  "gantt_alpha_pixel": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "not_verified": [
+    "real model flowchart roundtrip",
+    "real model gantt roundtrip",
+    "Windows",
+    "Linux",
+    "Edge",
+    "cross-platform font/pixel equivalence",
+    "legacy files other than explicit 0.9 compatibility format"
+  ]
+}

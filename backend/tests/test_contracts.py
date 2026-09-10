@@ -46,8 +46,8 @@ class ContractTests(unittest.TestCase):
         result, migrated = migrate_project(original)
         self.assertFalse(migrated)
         self.assertEqual(result.model_dump(), original)
-        for version in ["0.9", "2.0", None]:
-            with self.assertRaisesRegex(ValueError, "supports 1.0"):
+        for version in ["0.8", "2.0", None]:
+            with self.assertRaisesRegex(ValueError, "支持 1.0"):
                 migrate_project({**original, "project_file_version": version})
 
     def test_input_bounds_and_no_coercion(self):

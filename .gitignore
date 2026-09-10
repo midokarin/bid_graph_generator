@@ -20,3 +20,6 @@ local-data/
 *.pem
 config.local.json
 *.project.json
+# Runtime diagnostics and user model configuration must never be versioned.
+*.jsonl
+settings.json

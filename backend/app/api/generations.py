@@ -52,6 +52,8 @@ async def events(job_id: str, request: Request, last_event_id: str | None = Head
                 cursor = item["id"]
                 yield f"id: {cursor}\nevent: {item['event']}\ndata: {json.dumps(item['data'], ensure_ascii=False, allow_nan=False)}\n\n"
             if job.state in TERMINAL:
+                if cursor < len(job.events):
+                    continue
                 return
             if await request.is_disconnected():
                 return
