@@ -1,0 +1,15 @@
+import {useEffect,useState} from 'react';
+import {DEFAULT_APPEARANCE,FONTS,type Appearance,type Snapshot,type Proposal} from './model';
+export function StyleSettings({snapshot,onPropose}:{snapshot?:Snapshot;onPropose:(p:Proposal)=>void}){
+ const [draft,setDraft]=useState<Appearance>({...DEFAULT_APPEARANCE});
+ useEffect(()=>setDraft({...snapshot?.appearance??DEFAULT_APPEARANCE}),[snapshot]);
+ const changed=JSON.stringify(draft)!==JSON.stringify(snapshot?.appearance??DEFAULT_APPEARANCE);
+ const update=(field:keyof Appearance,value:string|number)=>setDraft(a=>({...a,[field]:value}));
+ return <div className="custom-styles"><h3>字体与颜色</h3><p className="muted">{snapshot?'调整后确认应用到整张图表。':'生成草稿后即可自定义版式。'}</p><fieldset disabled={!snapshot}>
+ <label className="field-label" htmlFor="font-family">字体选择</label><select id="font-family" value={draft.fontFamily} onChange={e=>update('fontFamily',e.target.value)}>{FONTS.map(font=><option key={font} value={font}>{font==='sans-serif'?'系统默认字体':font}</option>)}</select><p className="source-note">使用本机字体；未安装时浏览器可能回退，实际字体需核验。</p>
+ {([['textColor','文字颜色'],['strokeColor','线条颜色'],['fillColor','节点填充'],['backgroundColor','画布背景']] as const).map(([field,label])=><div key={field}><label className="field-label" htmlFor={field}>{label}</label><div className="color-field"><input aria-label={`${label}取色器`} type="color" value={/^#[0-9a-f]{6}$/i.test(draft[field])?draft[field]:'#000000'} onChange={e=>update(field,e.target.value.toUpperCase())}/><input id={field} value={draft[field]} maxLength={7} placeholder="#FFFFFF" onChange={e=>update(field,e.target.value.toUpperCase())}/></div></div>)}
+ <label className="field-label" htmlFor="stroke-width">线条粗细</label><select id="stroke-width" value={draft.strokeWidth} onChange={e=>update('strokeWidth',Number(e.target.value))}>{[.5,1,1.5,2,3,4,5].map(n=><option key={n} value={n}>{n} px</option>)}</select>
+ <label className="field-label" htmlFor="corner-radius">节点圆角</label><input id="corner-radius" type="range" min="0" max="24" value={draft.cornerRadius} onChange={e=>update('cornerRadius',Number(e.target.value))}/><span className="muted">{draft.cornerRadius} px · 仅普通流程节点</span>
+ <div className="style-actions"><button className="button" onClick={()=>setDraft({...DEFAULT_APPEARANCE})}>恢复默认</button><button className="button primary" disabled={!changed} onClick={()=>snapshot&&onPropose({baseRevision:snapshot.revision,field:'appearance',before:JSON.stringify(snapshot.appearance),after:JSON.stringify(draft),impact:'字体、颜色与线条样式应用到预览及 PNG。已确认的黑白白底规则仍参与检查；业务内容不变。'})}>查看并应用</button></div></fieldset></div>
+}
+export function describeChange(value:string|number,field:string){if(field==='appearance'){try{const a=JSON.parse(String(value));return `字体：${a.fontFamily}；文字：${a.textColor}；线条：${a.strokeColor}；填充：${a.fillColor}；背景：${a.backgroundColor}；线宽：${a.strokeWidth} px；圆角：${a.cornerRadius} px`;}catch{return String(value)}}if(field==='nodePosition'){try{const p=JSON.parse(String(value));return `横向 ${p.x}，纵向 ${p.y}`;}catch{return String(value)}}return value;}
