@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 from time import monotonic
 from uuid import uuid4
 
-from app.domain.contracts import GenerationRequest, RESULT_MODELS
+from app.domain.contracts import GenerationRequest, RESULT_MODELS, GanttSpec
+from app.domain.scheduling import schedule
 from app.domain.limits import MAX_JOBS, JOB_TTL_SECONDS, MAX_OUTPUT, MAX_REPAIRS
 from app.providers.base import Provider, ProviderError
 from .parsing import parse_result
@@ -94,6 +95,8 @@ class GenerationService:
                 self.status(job, "validating", attempt)
                 result, errors = parse_result(raw, model, request.direction)
                 if result is not None:
+                    if isinstance(result.spec, GanttSpec):
+                        job.emit("schedule", {"tasks": [task.model_dump(mode="json") for task in schedule(result.spec)]})
                     job.emit("result", result.model_dump(mode="json"))
                     self.status(job, "completed", attempt)
                     return

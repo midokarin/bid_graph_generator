@@ -10,4 +10,23 @@ export const createGeneration = (body: GenerationRequest) => fetch('/api/v1/gene
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 }).then(response => read<{job_id: string; state: string; events_url: string}>(response));
 export const cancelGeneration = (jobId: string) => fetch(`/api/v1/generations/${encodeURIComponent(jobId)}`, { method: 'DELETE' }).then(response => read<{job_id: string; state: string}>(response));
-// EventSource integration and workbench feedback intentionally belong to session two.
+
+export type StreamMessage={event:string;data:any};
+export function consumeGeneration(url:string,onMessage:(message:StreamMessage)=>void,signal:AbortSignal):Promise<void>{
+ return new Promise((resolve,reject)=>{
+  const source=new EventSource(url);let lastId=0;
+  const close=()=>{source.close();signal.removeEventListener('abort',abort)};
+  const abort=()=>{close();reject(new DOMException('已取消','AbortError'))};
+  signal.addEventListener('abort',abort,{once:true});
+  if(signal.aborted){abort();return;}
+  for(const event of ['status','delta','schedule','result','validation_error','error'])source.addEventListener(event,raw=>{
+   if(!(raw instanceof MessageEvent))return;
+   try{
+    const id=Number(raw.lastEventId);if(id<=lastId)return;lastId=id;
+    const data=JSON.parse(raw.data);onMessage({event,data});
+    if(event==='status'&&['completed','failed','cancelled'].includes(data.state)){close();data.state==='completed'?resolve():reject(new Error(data.state==='cancelled'?'已取消生成':'生成失败，请展开详情。'))}
+   }catch(error){close();reject(error)}
+  });
+  source.onerror=()=>{if(source.readyState===EventSource.CLOSED){close();reject(new Error('事件连接关闭，请重试。'))}};
+ });
+}

@@ -7,6 +7,7 @@ function port(value: string | undefined, fallback: number): number {
 }
 
 export default defineConfig({
+  optimizeDeps: { include: ['elkjs/lib/elk-api.js'] },
   server: {
     host: '127.0.0.1',
     port: port(process.env.BIAOSHU_WEB_PORT, 5173),

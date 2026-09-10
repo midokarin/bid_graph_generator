@@ -88,6 +88,12 @@ class APITests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(events[-1]["data"]["state"], "completed")
                         self.assertEqual([e["id"] for e in events], list(range(1, len(events) + 1)))
                         results = [e["data"] for e in events if e["event"] == "result"]
+                        schedules = [e["data"] for e in events if e["event"] == "schedule"]
+                        if kind == "gantt":
+                            self.assertEqual(len(schedules), 1)
+                            self.assertEqual([t["end"] for t in schedules[0]["tasks"]], [3, 7, 6, 7, 7])
+                        else:
+                            self.assertEqual(schedules, [])
                         self.assertEqual(len(results), 1)
                         RESULT_MODELS[kind].model_validate(results[0])
                         attempts = sorted({e["data"]["attempt"] for e in events if e["event"] == "delta"})

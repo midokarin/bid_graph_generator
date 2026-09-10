@@ -1,20 +1,90 @@
-import { useEffect, useState } from 'react';
-import { getHealth } from './api/client';
+import {useEffect,useRef,useState,useMemo} from 'react';
+import {ArrowDownToLine,ArrowRight,Check,CircleHelp,ClipboardList,FileText,FolderOpen,GitBranch,History,LayoutGrid,LoaderCircle,LockKeyhole,Maximize2,Minus,Plus,Save,Settings2,ShieldCheck,Sparkles,UnlockKeyhole,X,RotateCcw} from 'lucide-react';
+import {Diagram} from './Diagram';
+import {TemplatePanel} from './TemplatePanel';
+import {TEMPLATES,templateProposal} from './templates';
+import {StyleSettings,describeChange} from './StyleSettings';
+import {RunStream,type RunEvent,type RunStatus} from './RunStream';
+import {VersionHistory} from './VersionHistory';
+import {applyProposal,DEFAULT_STYLE,SAMPLES,view,withAppearance,type Kind,type Proposal,type Snapshot} from './model';
+import {useWorkspace,historyViews} from './store';
+import {layoutFlow} from './layout/client';
+import {cancelGeneration,consumeGeneration,createGeneration,getHealth} from './api/client';
+import {validateFlowchartResult,validateGanttResult} from './domain/validate';
+import type {VersionSnapshot,ScheduledTask,FlowchartSpec,GanttSpec} from './domain/generated/ProjectFile';
+import flowExample from '../../packages/contracts/examples/flowchart-project.json';
+import ganttExample from '../../packages/contracts/examples/gantt-project.json';
 
-export function App() {
-  const [status, setStatus] = useState('正在连接本地后端…');
-  useEffect(() => {
-    const controller = new AbortController();
-    getHealth(controller.signal)
-      .then(health => setStatus(`后端已连接 · ${health.provider === 'stub' ? '替身模型' : 'OpenAI 兼容接口'} · 契约 ${health.contract_version}`))
-      .catch(() => { if (!controller.signal.aborted) setStatus('后端未连接，请先启动本地生成服务。'); });
-    return () => controller.abort();
-  }, []);
-  return <main>
-    <span className="badge">P0 · 会话一</span>
-    <h1>标绘正式工程</h1>
-    <p>流程图与甘特图的生成后端、严格数据契约已建立。</p>
-    <section aria-label="服务状态"><h2>本地服务</h2><p role="status">{status}</p><a href="/api/v1/docs" target="_blank" rel="noreferrer">打开生成 API 文档</a></section>
-    <p className="muted">本页为启动入口。图表工作台、布局与编辑将在下一会话接入。</p>
-  </main>;
+export function App(){
+ const {versions,activeRevision,dirty,append,select,activate}=useWorkspace();const history=useMemo(()=>historyViews(versions),[versions]);const current=history.find(v=>v.revision===activeRevision);
+ const [kind,setKind]=useState<Kind>('flowchart'),[text,setText]=useState(SAMPLES.flowchart.text),[title,setTitle]=useState(SAMPLES.flowchart.title),[bidMode,setBidMode]=useState('unknown'),[page,setPage]=useState('A4'),[orientation,setOrientation]=useState('portrait'),[direction,setDirection]=useState<'DOWN'|'RIGHT'>('DOWN');
+ const [panel,setPanel]=useState<'input'|'style'>('input'),[templateId,setTemplateId]=useState('classic');
+ const [toast,setToast]=useState(''),[busy,setBusy]=useState(false),[proposal,setProposal]=useState<Proposal|null>(null),[modal,setModal]=useState<'export'|'help'|'replace'|'history'|null>(null),[zoom,setZoom]=useState(100),[inputDirty,setInputDirty]=useState(false),[locked,setLocked]=useState(false);
+ const [runStatus,setRunStatus]=useState<RunStatus>('idle'),[runEvents,setRunEvents]=useState<RunEvent[]>([]),[runExpanded,setRunExpanded]=useState(false),[attempts,setAttempts]=useState<Record<number,string>>({}),[provider,setProvider]=useState('连接中');
+ const svgRef=useRef<SVGSVGElement>(null),dialogRef=useRef<HTMLDialogElement>(null),controller=useRef<AbortController|null>(null),jobRef=useRef<string|null>(null);
+ const notify=(message:string)=>setToast(message);
+ useEffect(()=>{getHealth().then(h=>setProvider(h.provider==='stub'?'替身模型':'已连接模型')).catch(()=>setProvider('后端未连接'));return()=>{controller.current?.abort();if(jobRef.current)void cancelGeneration(jobRef.current)}},[]);
+ useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(t)}},[toast]);
+ useEffect(()=>{const handler=(e:BeforeUnloadEvent)=>{if(dirty||inputDirty){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler)},[dirty,inputDirty]);
+ useEffect(()=>{if(modal||proposal)dialogRef.current?.showModal();else dialogRef.current?.close()},[modal,proposal]);
+ const example={...(kind==='flowchart'?flowExample:ganttExample).versions[0],style:DEFAULT_STYLE} as VersionSnapshot;
+ const preview=current??withAppearance(view(example),TEMPLATES.find(t=>t.id===templateId)!.appearance);
+ function selectTemplate(id:string){if(busy)return;if(current){const p=templateProposal(current,id);if(p.before!==p.after)setProposal(p)}else{setTemplateId(id);setInputDirty(true)}}
+ function sample(k:Kind){if(busy)return;activate(k);setKind(k);setText(SAMPLES[k].text);setTitle(SAMPLES[k].title);setInputDirty(true)}
+ function switchVersion(snapshot:Snapshot){select(snapshot.revision);setModal(null);notify(`已切换到 v${snapshot.revision}，可查看或继续编辑。`)}
+ async function generate(force=false){
+  if(busy)return;if(!text.trim())return notify('请先输入业务内容。');
+  if(current&&!force){setModal('replace');return}
+  setModal(null);setBusy(true);setRunStatus('running');setRunEvents([]);setAttempts({});
+  const control=new AbortController();controller.current=control;const started=Date.now();let id=0;let result:any=null;let tasks:ScheduledTask[]|null=null;
+  const push=(message:string,source:RunEvent['source']='程序',level:RunEvent['level']='info')=>setRunEvents(events=>[...events,{id:++id,elapsed:`${((Date.now()-started)/1000).toFixed(1)}s`,source,message,level}]);
+  try{
+   push('正在理解内容');const job=await createGeneration({diagram_type:kind,source_text:text,direction});jobRef.current=job.job_id;
+   if(control.signal.aborted){await cancelGeneration(job.job_id);throw new Error('已取消生成')}
+   await consumeGeneration(job.events_url,({event,data})=>{
+    if(event==='delta')setAttempts(a=>({...a,[data.attempt]:(a[data.attempt]??'')+data.text}));
+    if(event==='status')push(({queued:'正在理解内容',generating:'正在生成结构',validating:'正在校验',repairing:'正在修复',completed:'校验通过',cancelled:'已取消',failed:'生成失败'} as Record<string,string>)[data.state]??data.state);
+    if(event==='schedule')tasks=data.tasks;
+    if(event==='result')result=data;
+    if(event==='error'||event==='validation_error')push(JSON.stringify(data),'程序','error');
+   },control.signal);
+   if(!result||!(kind==='flowchart'?validateFlowchartResult(result):validateGanttResult(result)))throw new Error('返回结果未通过前端契约校验。');
+   push('正在布局','渲染器');
+   const spec=structuredClone(result.spec) as FlowchartSpec|GanttSpec;spec.title=title.trim()||spec.title;
+   if(spec.diagram_type==='flowchart')spec.direction=direction;
+   const layout=spec.diagram_type==='flowchart'?await layoutFlow(spec,control.signal):{diagram_type:'gantt' as const,width:900,height:Math.max(420,168+spec.tasks.length*84),tasks:tasks??[]};
+   if(spec.diagram_type==='gantt'&&layout.diagram_type==='gantt'&&layout.tasks.length!==spec.tasks.length)throw new Error('后端排期缺失。');
+   if(control.signal.aborted)throw new Error('已取消生成');
+   append({revision:1,created_at:new Date().toISOString(),origin:'ai',spec,layout,style:current?.version.style??{...DEFAULT_STYLE,...withAppearance(view(example),preview.appearance).version.style},supplements:result.supplements,summary:result.summary});
+   setInputDirty(false);push('预览已生成，可继续编辑','渲染器','success');setRunStatus('success');notify('草稿已生成，已创建完整版本快照。');
+  }catch(e){push((e as Error).message,'程序','error');setRunStatus('error');setRunExpanded(true);notify((e as Error).message)}
+  finally{setBusy(false);jobRef.current=null;controller.current=null}
+ }
+ async function cancel(){controller.current?.abort();if(jobRef.current)await cancelGeneration(jobRef.current).catch(()=>notify('取消请求未送达，本页已忽略后续结果。'))}
+ async function relayout(){if(!current||busy||current.version.spec.diagram_type!=='flowchart')return;setBusy(true);const c=new AbortController();controller.current=c;try{const layout=await layoutFlow(current.version.spec,c.signal);append({...current.version,layout,origin:'relayout'});notify('已重新布局并创建新版本。')}catch(e){notify((e as Error).message)}finally{controller.current=null;setBusy(false)}}
+ function apply(){if(!current||!proposal||busy)return;try{append(applyProposal(current,proposal));setProposal(null);notify('修改已应用，已保留上一版。')}catch(e){notify((e as Error).message)}}
+ function save(){notify('项目文件保存属于下一会话，当前版本仅保留在内存中。')}
+ function reopen(){notify('项目文件打开属于下一会话。')}
+ function exportPreview(){setModal('export')}
+ const stage=current?1:0;
+ return <div className="app-shell">
+  <aside className="rail"><a className="brand-mark" href="#" aria-label="标绘工作台"><GitBranch size={24}/></a><div className="rail-divider"/><button className="rail-item active" aria-label="图表工作台" onClick={()=>setPanel('input')}><LayoutGrid size={21}/><span>工作台</span></button><button className="rail-item" onClick={reopen} aria-label="打开已保存项目"><FolderOpen size={21}/><span>本地项目</span></button><button className="rail-item" disabled={busy} onClick={()=>setModal('history')}><History size={21}/><span>版本记录</span></button><div className="rail-bottom"><button className="rail-item" onClick={()=>setModal('help')}><CircleHelp size={21}/><span>使用说明</span></button><div className="avatar">本地</div></div></aside>
+  <div className="workspace"><header><div className="header-title"><strong>标绘<span> / </span></strong><span>标书图表工作台</span><span className="demo-badge">本地工作台</span></div><div className="header-actions"><span className="save-status"><i/>{dirty?'有未保存的图表':current?'内存版本':'本地工作空间'}</span><button className="button" disabled={!current||busy} onClick={save}><Save size={16}/>保存项目</button><button className="button primary" disabled={!current||busy} onClick={exportPreview}><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></header>
+  <div className="project-heading"><div><div className="eyebrow">DIAGRAM STUDIO</div><h1>把方案，变成清晰的图表。</h1><p>从业务内容到文档插图，每一步都可核对、可修改。</p></div><div className="local-pill"><span/>{provider} · 本机服务</div></div>
+  <nav className="steps" aria-label="制作流程">{['输入内容','预览与修改','检查与下载'].map((label,i)=><div className={i===stage?'step selected':i<stage?'step done':'step'} key={label}><span className="step-number">{i<stage?<Check size={14}/>:String(i+1).padStart(2,'0')}</span><span>{label}</span>{i<2&&<span className="step-line"/>}</div>)}</nav>
+  <main className="editor-grid"><section className="input-panel panel"><div className="panel-tabs"><button className={panel==='input'?'selected':''} onClick={()=>setPanel('input')}><FileText size={16}/>内容输入</button><button className={panel==='style'?'selected':''} onClick={()=>setPanel('style')}><Settings2 size={16}/>版式设置</button></div>
+   <div className="input-scroll">{panel==='input'?<><div className="field-label">图表类型 <span className="required">*</span></div><div className="kind-picker"><button className={kind==='flowchart'?'selected':''} onClick={()=>sample('flowchart')}><GitBranch size={20}/><span>流程图</span>{kind==='flowchart'&&<Check size={14}/>}</button><button className={kind==='gantt'?'selected':''} onClick={()=>sample('gantt')}><ClipboardList size={20}/><span>甘特图</span>{kind==='gantt'&&<Check size={14}/>}</button></div>
+   <label className="field-label" htmlFor="title">图题</label><input id="title" disabled={busy} value={title} onChange={e=>{setTitle(e.target.value);setInputDirty(true)}} placeholder="为这张图表命名"/>
+   <label className="field-label" htmlFor="bid-mode">技术标类型 <span className="required">*</span></label><select id="bid-mode" value={bidMode} onChange={e=>{setBidMode(e.target.value);setInputDirty(true)}}><option value="unknown">尚不确定</option><option value="open">明标</option><option value="blind">暗标</option></select>
+   <div className="field-label field-row"><label htmlFor="business">业务内容 <span className="required">*</span></label><button className="text-button" onClick={()=>sample(kind)}>载入示例 <ArrowRight size={13}/></button></div><textarea id="business" disabled={busy} className="business-text" value={text} onChange={e=>{setText(e.target.value);setInputDirty(true)}}/><div className="input-caption">粘贴业务描述、步骤与依赖关系<span>{text.length} 字</span></div>
+   <div className="source-note"><CircleHelp size={14}/><span>当前为内置示例，内容不代表真实项目要求。</span></div></>:<><h3>文档插图版式</h3><p className="muted">版式参数暂存于工作台，以实际招标规则为准。</p><label className="field-label" htmlFor="paper">目标纸型</label><select id="paper" value={page} onChange={e=>{setPage(e.target.value);setInputDirty(true)}}><option>A4</option><option>A3</option></select><label className="field-label" htmlFor="orientation">页面方向</label><select id="orientation" value={orientation} onChange={e=>{setOrientation(e.target.value);setInputDirty(true)}}><option value="portrait">竖向</option><option value="landscape">横向</option></select><div className="setting-summary"><span>插入宽度<strong>160 mm</strong></span><span>输出分辨率<strong>300 DPI</strong></span><span>配色<strong>支持自定义</strong></span></div><label className="field-label" htmlFor="font-size">图内字号</label><select id="font-size" value={current?.fontSize??12} disabled={!current||busy} onChange={e=>current&&setProposal({baseRevision:current.revision,field:'fontSize',before:current.fontSize,after:Number(e.target.value),impact:'全图文字统一调整；业务内容不变。确认后需重新检查。'})}><option value="12">12 磅</option><option value="14">14 磅</option><option value="16">16 磅</option></select><p className="source-note">字号调整会先展示差异。纸型和纸面方向将在下一会话接入文件与导出。</p><StyleSettings snapshot={current} onPropose={setProposal}/></>}
+   </div><div className="generate-footer">{kind==='flowchart'&&<select aria-label="流程布局方向" value={direction} disabled={busy} onChange={e=>setDirection(e.target.value as 'DOWN'|'RIGHT')}><option value="DOWN">从上到下</option><option value="RIGHT">从左到右</option></select>}{busy&&<button className="text-button" onClick={cancel}>取消生成</button>}<button className="button primary generate" disabled={busy} onClick={()=>generate()}>{busy?<LoaderCircle size={18} className="spin"/>:<Sparkles size={18}/>} {busy?'正在生成…':current?'重新生成草稿':'生成图表草稿'}<ArrowRight size={17}/></button><span>{provider} · 完整校验后布局</span></div>
+  </section>
+  <section className="preview-panel panel"><div className="preview-toolbar"><div><span className="status-dot"/><strong>图表预览</strong><span className="sub-badge">{current?`v${current.revision}`:'示例'}</span>{current&&current.version.supplements.length>0&&<span className="sub-badge" title={current.version.summary}>AI 补充</span>}</div><div className="canvas-toolbar-actions"><button className="icon-button" disabled={!current||busy} title={locked?'解除业务内容保护':'保护业务内容'} aria-label={locked?'解除业务内容保护':'保护业务内容'} aria-pressed={locked??false} onClick={()=>setLocked(v=>!v)}>{locked?<LockKeyhole size={17}/>:<UnlockKeyhole size={17}/>}</button>{current?.kind==='flowchart'&&<button className="icon-button" disabled={busy} title="重新布局" aria-label="重新布局" onClick={relayout}><RotateCcw size={17}/></button>}<button className="icon-button" title="恢复适配视图" aria-label="恢复适配视图" onClick={()=>setZoom(100)}><Maximize2 size={17}/></button></div></div><RunStream attempts={attempts} status={runStatus} events={runEvents} expanded={runExpanded} onExpandedChange={setRunExpanded}/><div className="canvas-area"><div className="canvas-info"><span>{page} · {(orientation)==='portrait'?'竖向':'横向'} · 160 mm</span><span>{current?'工作草稿':'示例效果预览'}</span></div><div className="paper-wrap"><div className={'paper '+((current?.kind??kind)==='gantt'?'gantt-paper':'')} style={{width:`${zoom}%`,background:preview.version.style.transparent_background?'transparent':preview.appearance.backgroundColor}}><div className="paper-heading" style={{fontFamily:preview.appearance.fontFamily,color:preview.appearance.textColor}}>{current?.title??title}</div><Diagram key={current?.revision??`preview-${kind}`} snapshot={preview} svgRef={svgRef} locked={locked} onPropose={current&&!busy?setProposal:undefined}/></div></div><div className="canvas-bottom"><span><LockKeyhole size={13}/>{!current?'生成后可编辑':current.kind==='flowchart'?'双击文字编辑 · 拖动节点调整位置':'双击任务名称编辑 · 工期定位'}</span><div className="zoom-controls"><button aria-label="缩小" disabled={zoom<=60} onClick={()=>setZoom(z=>z-10)}><Minus size={14}/></button><span>{zoom}%</span><button aria-label="放大" disabled={zoom>=150} onClick={()=>setZoom(z=>z+10)}><Plus size={14}/></button></div></div></div>
+  </section>
+  <TemplatePanel snapshot={preview} onSelect={selectTemplate} onCustomize={()=>setPanel('style')}/>
+  </main><footer className="workspace-footer"><span><ShieldCheck size={13}/>版本仅留在内存 · 关闭前注意未保存内容</span><span>文件与导出待接入 <span className="footer-dot">·</span> 自定义文档插图</span></footer>
+  </div>{toast&&<div role="status" className="toast"><CircleHelp size={18}/>{toast}<button aria-label="关闭提示" onClick={()=>setToast('')}><X size={15}/></button></div>}
+  <dialog ref={dialogRef} onCancel={()=>{setModal(null);setProposal(null)}}><button className="dialog-close icon-button" aria-label="关闭弹窗" onClick={()=>{setModal(null);setProposal(null)}}><X size={20}/></button>{proposal?<><div className="dialog-symbol"><GitBranch size={24}/></div><h2>确认本次修改</h2><p className="muted">基于 v{proposal.baseRevision}，确认后创建新版本。</p><div className="diff-row"><span>修改前</span><del>{describeChange(proposal.before,proposal.field)}{proposal.field==='fontSize'?' 磅':''}</del></div><div className="diff-row after"><span>修改后</span><strong>{describeChange(proposal.after,proposal.field)}{proposal.field==='fontSize'?' 磅':''}</strong></div><div className="impact"><strong>影响范围</strong><p>{proposal.impact}</p></div><div className="dialog-actions"><button className="button" onClick={()=>setProposal(null)}>取消</button><button className="button primary" onClick={apply}>确认并应用 <Check size={16}/></button></div></>:modal==='export'?<><h2>图表输出预览</h2><p className="muted">v{current?.revision} · 项目文件与正式导出将在下一会话接入</p><div className="export-image">{current&&<Diagram snapshot={current}/>}</div><p className="scope-note">当前仅查看同源 SVG 预览，不下载文件。</p><div className="dialog-actions"><button className="button" onClick={()=>setModal(null)}>返回编辑</button><button className="button primary" disabled><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></>:modal==='history'?<VersionHistory history={history} currentRevision={current?.revision??null} onSelect={switchVersion} onRestore={()=>{current&&append({...current.version,origin:'restore'});setModal(null);notify('已恢复所查看版本内容，保存为新版本。');}}/>:modal==='replace'?<><h2>重新生成草稿？</h2><p className="muted">将使用左侧内容、图题和版式创建新版本。当前预览中的修改不会带入新草稿，历史版本保留。</p><div className="dialog-actions"><button className="button" onClick={()=>setModal(null)}>继续编辑</button><button className="button primary" onClick={()=>generate(true)}>确认重新生成</button></div></>:<><div className="dialog-symbol"><Sparkles size={24}/></div><h2>体验一张图表的完整流程</h2><ol className="help-steps"><li>选择流程图或甘特图，载入内置示例。</li><li>生成草稿，从右侧缩略图选择样式模板。</li><li>双击节点改文字、拖动节点，或在版式设置中调整字体与颜色；核对差异后应用。</li><li>在版本记录中查看和恢复完整快照。</li></ol><p className="scope-note">当前使用本机后端，替身模式返回固定合成样例，不理解原文。版本仅存于内存；项目文件和正式导出将在下一会话接入。</p><button className="button primary full" onClick={()=>setModal(null)}>开始体验 <ArrowRight size={16}/></button></>}</dialog>
+ </div>
 }

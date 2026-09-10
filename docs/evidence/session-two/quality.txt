@@ -1,0 +1,126 @@
+
+> bid-graph-generator@0.1.0 quality
+> python3 scripts/manage.py quality
+
+Pydantic JSON schemas: OK
+Generated TypeScript contracts: OK
+test_default_stub_both_kinds (test_api.APITests.test_default_stub_both_kinds) ... ok
+test_direction_is_authoritative_and_fence_accepted (test_api.APITests.test_direction_is_authoritative_and_fence_accepted) ... ok
+test_exact_repair_limit_and_cycle_repair (test_api.APITests.test_exact_repair_limit_and_cycle_repair) ... ok
+test_output_limit_timeout_and_api_errors (test_api.APITests.test_output_limit_timeout_and_api_errors) ... ok
+test_sse_success_repair_and_cancel (test_api.APITests.test_sse_success_repair_and_cancel) ... ok
+test_input_bounds_and_no_coercion (test_contracts.ContractTests.test_input_bounds_and_no_coercion) ... ok
+test_limited_cleanup_and_no_execution (test_contracts.ContractTests.test_limited_cleanup_and_no_execution) ... ok
+test_migration_boundary (test_contracts.ContractTests.test_migration_boundary) ... ok
+test_shared_corpus (test_contracts.ContractTests.test_shared_corpus) ... ok
+test_cancellation_closes_upstream_response (test_provider.ProviderTests.test_cancellation_closes_upstream_response) ... ok
+test_fallback_only_for_explicit_unsupported_schema (test_provider.ProviderTests.test_fallback_only_for_explicit_unsupported_schema) ... ok
+test_invalid_truncated_and_filtered_sse (test_provider.ProviderTests.test_invalid_truncated_and_filtered_sse) ... ok
+test_native_schema_chunked_sse_and_cleanup (test_provider.ProviderTests.test_native_schema_chunked_sse_and_cleanup) ... ok
+test_off_required_and_safe_errors (test_provider.ProviderTests.test_off_required_and_safe_errors) ... ok
+test_configuration_is_explicit_and_key_repr_hidden (test_runtime.RuntimeTests.test_configuration_is_explicit_and_key_repr_hidden) ... ok
+test_temp_log_is_bounded_and_cleanup_preserves_live_runs (test_runtime.RuntimeTests.test_temp_log_is_bounded_and_cleanup_preserves_live_runs) ... ok
+test_earliest_fractional_and_cycle (test_scheduling.SchedulingTests.test_earliest_fractional_and_cycle) ... ok
+test_units_parallel_lead_lag_milestones_and_determinism (test_scheduling.SchedulingTests.test_units_parallel_lead_lag_milestones_and_determinism) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 1.177s
+
+OK
+
+> @bid-graph/frontend@0.1.0 test
+> node --import tsx --test tests/*.test.ts
+
+✔ shared contract: flowchart-valid (1.821666ms)
+✔ shared contract: flowchart-spec-valid (0.511417ms)
+✔ shared contract: flowchart-missing (0.140666ms)
+✔ shared contract: flowchart-unknown (0.101958ms)
+✔ shared contract: flowchart-wrong-type (0.101333ms)
+✔ shared contract: flowchart-supplement-ref (0.244583ms)
+✔ shared contract: flowchart-project-valid (2.474334ms)
+✔ shared contract: flowchart-project-future (1.619792ms)
+✔ shared contract: flowchart-project-current (0.26425ms)
+✔ shared contract: flowchart-project-unknown-style (0.272334ms)
+✔ shared contract: flowchart-project-date (0.209875ms)
+✔ shared contract: flowchart-project-color (0.15425ms)
+✔ shared contract: flowchart-project-revision (0.208084ms)
+✔ shared contract: flowchart-project-kind (0.123083ms)
+✔ shared contract: flowchart-empty-title (0.087666ms)
+✔ shared contract: gantt-valid (0.819959ms)
+✔ shared contract: gantt-spec-valid (0.4495ms)
+✔ shared contract: gantt-missing (0.100625ms)
+✔ shared contract: gantt-unknown (0.086125ms)
+✔ shared contract: gantt-wrong-type (0.05975ms)
+✔ shared contract: gantt-supplement-ref (0.058584ms)
+✔ shared contract: gantt-project-valid (0.137667ms)
+✔ shared contract: gantt-project-future (0.083542ms)
+✔ shared contract: gantt-project-current (0.077458ms)
+✔ shared contract: gantt-project-unknown-style (0.078417ms)
+✔ shared contract: gantt-project-date (0.070708ms)
+✔ shared contract: gantt-project-color (0.077917ms)
+✔ shared contract: gantt-project-revision (0.111ms)
+✔ shared contract: gantt-project-kind (0.065083ms)
+✔ shared contract: gantt-empty-title (0.064583ms)
+✔ shared contract: flow-dangling (0.066833ms)
+✔ shared contract: flow-duplicate-node (0.077125ms)
+✔ shared contract: flow-duplicate-edge (0.057459ms)
+✔ shared contract: flow-enum (0.054375ms)
+✔ shared contract: flow-coercion (0.057125ms)
+✔ shared contract: flow-bool-number (0.047708ms)
+✔ shared contract: flow-level-negative (0.05175ms)
+✔ shared contract: flow-too-many (0.069083ms)
+✔ shared contract: flow-label-too-long (0.049583ms)
+✔ shared contract: gantt-unit-week (0.065667ms)
+✔ shared contract: gantt-unit-month (0.044042ms)
+✔ shared contract: gantt-dangling (0.052791ms)
+✔ shared contract: gantt-cycle (0.045667ms)
+✔ shared contract: gantt-self-cycle (0.059167ms)
+✔ shared contract: gantt-duplicate-task (0.054625ms)
+✔ shared contract: gantt-duplicate-dependency (0.05325ms)
+✔ shared contract: gantt-negative-duration (0.041959ms)
+✔ shared contract: gantt-bool-duration (0.043875ms)
+✔ shared contract: gantt-milestone-duration (0.05425ms)
+✔ shared contract: gantt-task-zero (0.05225ms)
+✔ shared contract: gantt-coercion (0.048417ms)
+✔ shared contract: gantt-unit (0.04475ms)
+✔ shared contract: flow-geometry-coverage (0.101ms)
+✔ shared contract: flow-geometry-direction (0.091167ms)
+✔ shared contract: flow-geometry-range (0.097334ms)
+✔ shared contract: flow-geometry-canvas (0.087208ms)
+✔ shared contract: gantt-schedule-range (0.081875ms)
+✔ shared contract: gantt-schedule-coverage (0.057334ms)
+✔ shared contract: flow-json-integer-number (0.043916ms)
+✔ shared contract: flow-fractional-level (0.041583ms)
+✔ shared contract: project-timestamp-2026-09-10T00:00:60Z (0.090542ms)
+✔ shared contract: project-timestamp-2026-09-10T00:00:00+00:60 (0.0855ms)
+✔ shared contract: project-timestamp-0000-09-10T00:00:00Z (0.08325ms)
+✔ runtime validators narrow unknown JSON to generated TypeScript types (3.827959ms)
+✔ flow JSON → ELK DOWN/RIGHT → SVG; complete snapshots preserve coordinates and bends (94.603125ms)
+✔ gantt JSON → actual Python schedule → SVG across day/week/month, with long canvas (296.425042ms)
+✔ multi-branch layout and readable text bounds (10.507625ms)
+ℹ tests 67
+ℹ suites 0
+ℹ pass 67
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 704.606958
+
+> @bid-graph/frontend@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @bid-graph/frontend@0.1.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1791 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                             0.38 kB │ gzip:   0.30 kB
+dist/assets/elk-worker.min-DGCccKuH.js  1,613.73 kB
+dist/assets/index-BPRwk21s.css             23.99 kB │ gzip:   6.09 kB
+dist/assets/index-C7b7E8mq.js             412.57 kB │ gzip: 127.72 kB
+✓ built in 988ms
