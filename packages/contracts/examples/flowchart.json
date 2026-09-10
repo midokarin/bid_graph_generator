@@ -1,0 +1,111 @@
+{
+  "spec": {
+    "schema_version": "1.0",
+    "diagram_type": "flowchart",
+    "title": "合成示例：检查与整改",
+    "direction": "DOWN",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "start",
+        "text": "开始",
+        "level": 0,
+        "owner": null,
+        "phase": null
+      },
+      {
+        "id": "n2",
+        "type": "process",
+        "text": "执行",
+        "level": 1,
+        "owner": null,
+        "phase": null
+      },
+      {
+        "id": "n3",
+        "type": "decision",
+        "text": "检查",
+        "level": 2,
+        "owner": null,
+        "phase": null
+      },
+      {
+        "id": "n4",
+        "type": "subprocess",
+        "text": "整改",
+        "level": 3,
+        "owner": null,
+        "phase": null
+      },
+      {
+        "id": "n5",
+        "type": "document",
+        "text": "报告",
+        "level": 3,
+        "owner": null,
+        "phase": null
+      },
+      {
+        "id": "n6",
+        "type": "end",
+        "text": "结束",
+        "level": 4,
+        "owner": null,
+        "phase": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "n1",
+        "target": "n2",
+        "label": null,
+        "kind": "normal"
+      },
+      {
+        "id": "e2",
+        "source": "n2",
+        "target": "n3",
+        "label": null,
+        "kind": "normal"
+      },
+      {
+        "id": "e3",
+        "source": "n3",
+        "target": "n4",
+        "label": "不合格",
+        "kind": "normal"
+      },
+      {
+        "id": "e4",
+        "source": "n4",
+        "target": "n3",
+        "label": "复检",
+        "kind": "rework"
+      },
+      {
+        "id": "e5",
+        "source": "n3",
+        "target": "n5",
+        "label": "合格",
+        "kind": "normal"
+      },
+      {
+        "id": "e6",
+        "source": "n5",
+        "target": "n6",
+        "label": null,
+        "kind": "normal"
+      }
+    ]
+  },
+  "supplements": [
+    {
+      "target_type": "node",
+      "target_id": "n5",
+      "reason": "合成示例补充报告",
+      "question": "是否需要报告？"
+    }
+  ],
+  "summary": "合成测试数据，包含六种节点与整改回路。"
+}

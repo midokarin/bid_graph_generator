@@ -1,0 +1,154 @@
+{
+  "project_file_version": "1.0",
+  "diagram_type": "gantt",
+  "source_text": "合成测试原文",
+  "current_revision": 1,
+  "versions": [
+    {
+      "revision": 1,
+      "created_at": "2026-09-10T00:00:00Z",
+      "origin": "ai",
+      "spec": {
+        "schema_version": "1.0",
+        "diagram_type": "gantt",
+        "title": "合成示例：实施进度",
+        "time_unit": "calendar_day",
+        "tasks": [
+          {
+            "id": "t1",
+            "text": "准备",
+            "kind": "task",
+            "duration": 3,
+            "earliest_start": null
+          },
+          {
+            "id": "t2",
+            "text": "实施",
+            "kind": "task",
+            "duration": 5,
+            "earliest_start": 2
+          },
+          {
+            "id": "t3",
+            "text": "培训",
+            "kind": "task",
+            "duration": 2,
+            "earliest_start": null
+          },
+          {
+            "id": "m1",
+            "text": "阶段验收",
+            "kind": "milestone",
+            "duration": 0,
+            "earliest_start": null
+          },
+          {
+            "id": "m2",
+            "text": "交付",
+            "kind": "milestone",
+            "duration": 0,
+            "earliest_start": null
+          }
+        ],
+        "dependencies": [
+          {
+            "id": "d1",
+            "source": "t1",
+            "target": "t2",
+            "type": "FS",
+            "lag": -1
+          },
+          {
+            "id": "d2",
+            "source": "t1",
+            "target": "t3",
+            "type": "FS",
+            "lag": 1
+          },
+          {
+            "id": "d3",
+            "source": "t2",
+            "target": "m1",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d4",
+            "source": "m1",
+            "target": "m2",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d5",
+            "source": "t3",
+            "target": "m2",
+            "type": "FS",
+            "lag": 0
+          }
+        ]
+      },
+      "supplements": [
+        {
+          "target_type": "task",
+          "target_id": "t2",
+          "reason": "合成示例估算工期",
+          "question": "是否为 5 天？"
+        }
+      ],
+      "summary": "合成测试数据，包含并行、提前、延迟和两个里程碑。",
+      "layout": {
+        "diagram_type": "gantt",
+        "width": 500,
+        "height": 500,
+        "tasks": [
+          {
+            "id": "t1",
+            "start": 0,
+            "end": 3,
+            "row": 0
+          },
+          {
+            "id": "t2",
+            "start": 2,
+            "end": 7,
+            "row": 1
+          },
+          {
+            "id": "t3",
+            "start": 4,
+            "end": 6,
+            "row": 2
+          },
+          {
+            "id": "m1",
+            "start": 7,
+            "end": 7,
+            "row": 3
+          },
+          {
+            "id": "m2",
+            "start": 7,
+            "end": 7,
+            "row": 4
+          }
+        ]
+      },
+      "style": {
+        "template": "classic",
+        "font_family": "sans-serif",
+        "font_size": 16,
+        "text_color": "#000000",
+        "stroke_color": "#000000",
+        "fill_color": "#FFFFFF",
+        "background_color": "#FFFFFF",
+        "transparent_background": false,
+        "stroke_width": 1.5,
+        "corner_radius": 5
+      }
+    }
+  ],
+  "metadata": {
+    "fixture": true
+  }
+}

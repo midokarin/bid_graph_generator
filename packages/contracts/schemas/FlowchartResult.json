@@ -1,0 +1,266 @@
+{
+  "$defs": {
+    "FlowEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Target",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Label"
+        },
+        "kind": {
+          "enum": [
+            "normal",
+            "rework"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "label",
+        "kind"
+      ],
+      "title": "FlowEdge",
+      "type": "object"
+    },
+    "FlowNode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "start",
+            "end",
+            "process",
+            "decision",
+            "document",
+            "subprocess"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "type": "string"
+        },
+        "level": {
+          "maximum": 20,
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Owner"
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Phase"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "text",
+        "level",
+        "owner",
+        "phase"
+      ],
+      "title": "FlowNode",
+      "type": "object"
+    },
+    "FlowchartSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "diagram_type": {
+          "const": "flowchart",
+          "title": "Diagram Type",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "DOWN",
+            "RIGHT"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/FlowNode"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/FlowEdge"
+          },
+          "title": "Edges",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "diagram_type",
+        "title",
+        "direction",
+        "nodes",
+        "edges"
+      ],
+      "title": "FlowchartSpec",
+      "type": "object",
+      "x-domain": "flowchart"
+    },
+    "Supplement": {
+      "additionalProperties": false,
+      "properties": {
+        "target_type": {
+          "enum": [
+            "node",
+            "edge",
+            "task",
+            "dependency"
+          ],
+          "title": "Target Type",
+          "type": "string"
+        },
+        "target_id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Reason",
+          "type": "string"
+        },
+        "question": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_type",
+        "target_id",
+        "reason",
+        "question"
+      ],
+      "title": "Supplement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "spec": {
+      "$ref": "#/$defs/FlowchartSpec"
+    },
+    "supplements": {
+      "items": {
+        "$ref": "#/$defs/Supplement"
+      },
+      "title": "Supplements",
+      "type": "array"
+    },
+    "summary": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "spec",
+    "supplements",
+    "summary"
+  ],
+  "title": "FlowchartResult",
+  "type": "object",
+  "x-domain": "result",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -1,0 +1,854 @@
+{
+  "$defs": {
+    "EdgeGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/Point"
+          },
+          "minItems": 2,
+          "title": "Points",
+          "type": "array"
+        },
+        "label_position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Point"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "points",
+        "label_position"
+      ],
+      "title": "EdgeGeometry",
+      "type": "object"
+    },
+    "FlowEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Target",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Label"
+        },
+        "kind": {
+          "enum": [
+            "normal",
+            "rework"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "label",
+        "kind"
+      ],
+      "title": "FlowEdge",
+      "type": "object"
+    },
+    "FlowLayout": {
+      "additionalProperties": false,
+      "properties": {
+        "diagram_type": {
+          "const": "flowchart",
+          "title": "Diagram Type",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "DOWN",
+            "RIGHT"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Height",
+          "type": "number"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/NodeGeometry"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/EdgeGeometry"
+          },
+          "title": "Edges",
+          "type": "array"
+        }
+      },
+      "required": [
+        "diagram_type",
+        "direction",
+        "width",
+        "height",
+        "nodes",
+        "edges"
+      ],
+      "title": "FlowLayout",
+      "type": "object"
+    },
+    "FlowNode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "start",
+            "end",
+            "process",
+            "decision",
+            "document",
+            "subprocess"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "type": "string"
+        },
+        "level": {
+          "maximum": 20,
+          "minimum": 0,
+          "title": "Level",
+          "type": "integer"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Owner"
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "pattern": "\\S",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Phase"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "text",
+        "level",
+        "owner",
+        "phase"
+      ],
+      "title": "FlowNode",
+      "type": "object"
+    },
+    "FlowchartSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "diagram_type": {
+          "const": "flowchart",
+          "title": "Diagram Type",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "DOWN",
+            "RIGHT"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/FlowNode"
+          },
+          "maxItems": 20,
+          "minItems": 1,
+          "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/FlowEdge"
+          },
+          "title": "Edges",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "diagram_type",
+        "title",
+        "direction",
+        "nodes",
+        "edges"
+      ],
+      "title": "FlowchartSpec",
+      "type": "object",
+      "x-domain": "flowchart"
+    },
+    "GanttDependency": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Target",
+          "type": "string"
+        },
+        "type": {
+          "const": "FS",
+          "title": "Type",
+          "type": "string"
+        },
+        "lag": {
+          "maximum": 1000000,
+          "minimum": -1000000,
+          "title": "Lag",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "type",
+        "lag"
+      ],
+      "title": "GanttDependency",
+      "type": "object"
+    },
+    "GanttLayout": {
+      "additionalProperties": false,
+      "properties": {
+        "diagram_type": {
+          "const": "gantt",
+          "title": "Diagram Type",
+          "type": "string"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Height",
+          "type": "number"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/ScheduledTask"
+          },
+          "title": "Tasks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "diagram_type",
+        "width",
+        "height",
+        "tasks"
+      ],
+      "title": "GanttLayout",
+      "type": "object"
+    },
+    "GanttSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "diagram_type": {
+          "const": "gantt",
+          "title": "Diagram Type",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        },
+        "time_unit": {
+          "enum": [
+            "calendar_day",
+            "week",
+            "month"
+          ],
+          "title": "Time Unit",
+          "type": "string"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/GanttTask"
+          },
+          "minItems": 1,
+          "title": "Tasks",
+          "type": "array"
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/GanttDependency"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "diagram_type",
+        "title",
+        "time_unit",
+        "tasks",
+        "dependencies"
+      ],
+      "title": "GanttSpec",
+      "type": "object",
+      "x-domain": "gantt"
+    },
+    "GanttTask": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "task",
+            "milestone"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "duration": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Duration",
+          "type": "number"
+        },
+        "earliest_start": {
+          "anyOf": [
+            {
+              "maximum": 1000000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Earliest Start"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "kind",
+        "duration",
+        "earliest_start"
+      ],
+      "title": "GanttTask",
+      "type": "object",
+      "x-domain": "task"
+    },
+    "JsonValue": {},
+    "NodeGeometry": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        },
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Width",
+          "type": "number"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "title": "Height",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "id",
+        "width",
+        "height"
+      ],
+      "title": "NodeGeometry",
+      "type": "object"
+    },
+    "Point": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "Point",
+      "type": "object"
+    },
+    "ScheduledTask": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "start": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Start",
+          "type": "number"
+        },
+        "end": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "End",
+          "type": "number"
+        },
+        "row": {
+          "minimum": 0,
+          "title": "Row",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "start",
+        "end",
+        "row"
+      ],
+      "title": "ScheduledTask",
+      "type": "object",
+      "x-domain": "scheduled_task"
+    },
+    "Style": {
+      "additionalProperties": false,
+      "properties": {
+        "template": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Template",
+          "type": "string"
+        },
+        "font_family": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Font Family",
+          "type": "string"
+        },
+        "font_size": {
+          "maximum": 72,
+          "minimum": 8,
+          "title": "Font Size",
+          "type": "number"
+        },
+        "text_color": {
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Text Color",
+          "type": "string"
+        },
+        "stroke_color": {
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Stroke Color",
+          "type": "string"
+        },
+        "fill_color": {
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Fill Color",
+          "type": "string"
+        },
+        "background_color": {
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "title": "Background Color",
+          "type": "string"
+        },
+        "transparent_background": {
+          "title": "Transparent Background",
+          "type": "boolean"
+        },
+        "stroke_width": {
+          "maximum": 10,
+          "minimum": 0.5,
+          "title": "Stroke Width",
+          "type": "number"
+        },
+        "corner_radius": {
+          "maximum": 50,
+          "minimum": 0,
+          "title": "Corner Radius",
+          "type": "number"
+        }
+      },
+      "required": [
+        "template",
+        "font_family",
+        "font_size",
+        "text_color",
+        "stroke_color",
+        "fill_color",
+        "background_color",
+        "transparent_background",
+        "stroke_width",
+        "corner_radius"
+      ],
+      "title": "Style",
+      "type": "object"
+    },
+    "Supplement": {
+      "additionalProperties": false,
+      "properties": {
+        "target_type": {
+          "enum": [
+            "node",
+            "edge",
+            "task",
+            "dependency"
+          ],
+          "title": "Target Type",
+          "type": "string"
+        },
+        "target_id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Reason",
+          "type": "string"
+        },
+        "question": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_type",
+        "target_id",
+        "reason",
+        "question"
+      ],
+      "title": "Supplement",
+      "type": "object"
+    },
+    "VersionSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$",
+          "title": "Created At",
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "ai",
+            "text",
+            "position",
+            "style",
+            "template",
+            "relayout",
+            "restore"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "spec": {
+          "discriminator": {
+            "mapping": {
+              "flowchart": "#/$defs/FlowchartSpec",
+              "gantt": "#/$defs/GanttSpec"
+            },
+            "propertyName": "diagram_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/FlowchartSpec"
+            },
+            {
+              "$ref": "#/$defs/GanttSpec"
+            }
+          ],
+          "title": "Spec"
+        },
+        "layout": {
+          "discriminator": {
+            "mapping": {
+              "flowchart": "#/$defs/FlowLayout",
+              "gantt": "#/$defs/GanttLayout"
+            },
+            "propertyName": "diagram_type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/FlowLayout"
+            },
+            {
+              "$ref": "#/$defs/GanttLayout"
+            }
+          ],
+          "title": "Layout"
+        },
+        "style": {
+          "$ref": "#/$defs/Style"
+        },
+        "supplements": {
+          "items": {
+            "$ref": "#/$defs/Supplement"
+          },
+          "title": "Supplements",
+          "type": "array"
+        },
+        "summary": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "revision",
+        "created_at",
+        "origin",
+        "spec",
+        "layout",
+        "style",
+        "supplements",
+        "summary"
+      ],
+      "title": "VersionSnapshot",
+      "type": "object",
+      "x-domain": "snapshot"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "project_file_version": {
+      "const": "1.0",
+      "title": "Project File Version",
+      "type": "string"
+    },
+    "diagram_type": {
+      "enum": [
+        "flowchart",
+        "gantt"
+      ],
+      "title": "Diagram Type",
+      "type": "string"
+    },
+    "source_text": {
+      "maxLength": 50000,
+      "title": "Source Text",
+      "type": "string"
+    },
+    "current_revision": {
+      "minimum": 1,
+      "title": "Current Revision",
+      "type": "integer"
+    },
+    "versions": {
+      "items": {
+        "$ref": "#/$defs/VersionSnapshot"
+      },
+      "minItems": 1,
+      "title": "Versions",
+      "type": "array"
+    },
+    "metadata": {
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "project_file_version",
+    "diagram_type",
+    "source_text",
+    "current_revision",
+    "versions",
+    "metadata"
+  ],
+  "title": "ProjectFile",
+  "type": "object",
+  "x-domain": "project",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

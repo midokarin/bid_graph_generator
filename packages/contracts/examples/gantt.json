@@ -1,0 +1,91 @@
+{
+  "spec": {
+    "schema_version": "1.0",
+    "diagram_type": "gantt",
+    "title": "合成示例：实施进度",
+    "time_unit": "calendar_day",
+    "tasks": [
+      {
+        "id": "t1",
+        "text": "准备",
+        "kind": "task",
+        "duration": 3,
+        "earliest_start": null
+      },
+      {
+        "id": "t2",
+        "text": "实施",
+        "kind": "task",
+        "duration": 5,
+        "earliest_start": 2
+      },
+      {
+        "id": "t3",
+        "text": "培训",
+        "kind": "task",
+        "duration": 2,
+        "earliest_start": null
+      },
+      {
+        "id": "m1",
+        "text": "阶段验收",
+        "kind": "milestone",
+        "duration": 0,
+        "earliest_start": null
+      },
+      {
+        "id": "m2",
+        "text": "交付",
+        "kind": "milestone",
+        "duration": 0,
+        "earliest_start": null
+      }
+    ],
+    "dependencies": [
+      {
+        "id": "d1",
+        "source": "t1",
+        "target": "t2",
+        "type": "FS",
+        "lag": -1
+      },
+      {
+        "id": "d2",
+        "source": "t1",
+        "target": "t3",
+        "type": "FS",
+        "lag": 1
+      },
+      {
+        "id": "d3",
+        "source": "t2",
+        "target": "m1",
+        "type": "FS",
+        "lag": 0
+      },
+      {
+        "id": "d4",
+        "source": "m1",
+        "target": "m2",
+        "type": "FS",
+        "lag": 0
+      },
+      {
+        "id": "d5",
+        "source": "t3",
+        "target": "m2",
+        "type": "FS",
+        "lag": 0
+      }
+    ]
+  },
+  "supplements": [
+    {
+      "target_type": "task",
+      "target_id": "t2",
+      "reason": "合成示例估算工期",
+      "question": "是否为 5 天？"
+    }
+  ],
+  "summary": "合成测试数据，包含并行、提前、延迟和两个里程碑。"
+}

@@ -1,0 +1,14 @@
+{
+  "name": "bid-graph-generator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["frontend"],
+  "engines": {"node": ">=22.12.0"},
+  "scripts": {
+    "dev": "npm run dev --workspace frontend",
+    "backend": "python3 scripts/manage.py backend",
+    "contracts": "python3 scripts/manage.py contracts",
+    "quality": "python3 scripts/manage.py quality"
+  }
+}

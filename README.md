@@ -1,0 +1,142 @@
+# 标绘：标书图表生成程序
+
+当前交付为 **P0 会话一：正式骨架、数据契约与生成后端**。
+`demo/` 保留为独立交互参考，不参与正式工程，也不代表真实模型能力。
+
+## 安装与启动
+
+要求 Python 3.11+、Node.js 22.12+。在仓库根目录执行：
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
+npm ci
+```
+
+Windows 中使用 `python` 创建虚拟环境，安装命令改为：
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
+npm ci
+```
+
+两个终端分别运行：
+
+```sh
+npm run backend
+```
+
+```sh
+npm run dev
+```
+
+后端：[API 文档](http://127.0.0.1:8000/api/v1/docs)；前端：[正式启动页](http://127.0.0.1:5173)。
+启动入口只监听 `127.0.0.1`，前端 `/api` 代理至后端。生产构建输出在 `frontend/dist/`。
+Windows 如果系统没有 `python3` 别名，可直接用 `python scripts/manage.py backend` / `python scripts/manage.py quality`。
+
+若端口已被其他程序占用，设置 `BIAOSHU_API_PORT`（两个终端保持一致）和 `BIAOSHU_WEB_PORT`，例如 macOS/Linux：
+
+```sh
+BIAOSHU_API_PORT=8010 npm run backend
+BIAOSHU_API_PORT=8010 BIAOSHU_WEB_PORT=5174 npm run dev
+```
+
+Windows PowerShell 可通过 `$env:BIAOSHU_API_PORT="8010"`、`$env:BIAOSHU_WEB_PORT="5174"` 设置后启动。
+
+默认 `BIAOSHU_PROVIDER=stub`，生成固定的合成样例，**不会理解原文或调用外部模型**。
+正式启动页只显示服务状态；生成操作先通过 API，工作台与 SSE 窗口属于会话二。
+
+## 一条质量命令
+
+```sh
+npm run quality
+```
+
+依次检查 Schema 与 TS 生成文件是否漂移、运行后端测试、共享契约样例、前端类型检查与生产构建。无模型 Key 或网络也能运行测试。
+
+修改 Pydantic 契约后显式再生成：
+
+```sh
+npm run contracts
+```
+
+测试样例都是人工合成数据，维护脚本为 `scripts/build_fixtures.py`；有效图表与项目示例在 `packages/contracts/examples/`，有效/无效用例在 `packages/contracts/cases.json`。
+
+服务启动后可额外执行真实 HTTP 启动检查（仅允许替身模式；端口按实际启动值填写）：
+
+```sh
+.venv/bin/python scripts/smoke_http.py --api-port 8010 --web-port 5174
+```
+
+## API 快速验证
+
+创建任务（把 `diagram_type` 改为 `gantt` 可测试甘特图）：
+
+```sh
+curl -s http://127.0.0.1:8000/api/v1/generations \
+  -H 'Content-Type: application/json' \
+  -d '{"diagram_type":"flowchart","source_text":"开始，然后结束。","direction":"DOWN"}'
+```
+
+用返回的 `job_id` 订阅，另一个终端可取消：
+
+```sh
+curl -N http://127.0.0.1:8000/api/v1/generations/JOB_ID/events
+curl -X DELETE http://127.0.0.1:8000/api/v1/generations/JOB_ID
+```
+
+事件有单调递增 `id`，重连可带 `Last-Event-ID`。正常顺序：
+
+```text
+status: queued → generating
+delta: {attempt: 0, text: "…"}
+status: validating
+（校验失败则 validation_error → repairing → delta → validating，最多两次）
+result: {spec, supplements, summary}
+status: completed
+```
+
+失败发送 `error: {message, code, details}` 和 `failed`；取消发送 `cancelled`，之后不再发出结果。
+任务完成后取消为幂等操作，不撤销已经完成的结果。关闭 SSE 连接不等于取消任务，必须调用 DELETE。
+SSE 中间文本仅供观察，只有 `result` 可供正式业务消费。HTTP 404 表示任务不存在/过期，422 为输入错误，429 为任务缓存已满。
+
+## 模型配置
+
+本会话只提供环境变量入口，不落盘密钥、不实现设置页。
+
+| 变量 | 默认值 | 作用 |
+|---|---|---|
+| `BIAOSHU_PROVIDER` | `stub` | `stub` 或 `openai` |
+| `BIAOSHU_BASE_URL` | `https://api.openai.com/v1` | OpenAI 兼容接口前缀 |
+| `BIAOSHU_MODEL` | 空 | 供应商模型名 |
+| `BIAOSHU_API_KEY` | 空 | 仅后端读取的 Key |
+| `BIAOSHU_STRUCTURED_OUTPUT` | `auto` | `auto`、`required`、`off` |
+| `BIAOSHU_TIMEOUT` | `120` | 每次生成/修复的总秒数，上限 600 |
+
+`auto` 优先请求原生 `json_schema`；仅当供应商明确报告 `response_format` 不受支持时，退回提示词 Schema。鉴权、限流、一般 Schema 错误不触发降级。`off` 可适配只支持提示词约束的接口。无论模式如何，本地校验始终执行。
+
+真实模式会将原文、图种专属提示词、Schema 及预留要求发送到所配置的供应商；修复只发送错误 JSON、校验错误和系统约束，不重发原文。本次交付没有做真实外部调用。
+
+## 工程边界与数据
+
+- `backend/app/domain/`：Pydantic 权威模型、纯校验、迁移入口、集中技术限制。
+- `backend/app/providers/`：可配置 OpenAI 兼容流式适配器、固定替身。
+- `backend/app/services/`：生成/修复/取消、有限 JSON 清理、临时诊断日志。
+- `backend/app/api/`：创建、SSE、取消；领域层不依赖 FastAPI。
+- `frontend/src/domain/`：生成的 TS 类型、基于权威 Schema 的 Ajv 校验与语义规则。
+- `frontend/src/adapters/`：薄的独立模式宿主边界，不绑定具体宿主协议。
+- `packages/contracts/`：生成 Schema、合成示例和两端共用反例。
+
+JSON Schema 无法单独表达引用完整性、依赖环和项目快照一致性：Schema 中的 `x-domain` 标识附加规则，Python/Pydantic 和 TS/Ajv 都必须执行这些规则。TS 类型只是静态约束，未知 JSON 必须经过运行时校验。
+整数按 JSON 数值语义校验，`1` 和 `1.0` 同值，字符串数字、布尔数值、非整数均不被接受。
+
+项目格式和图表 Schema 版本分别为 `1.0`。业务 `spec`、`layout`、`style` 分开；版本保存完整快照、补充项和说明。项目 `metadata` 是唯一自由扩展区。迁移入口目前仅接收 `1.0`，旧格式及未知未来格式明确拒绝；Demo 数据不隐式迁移。文件 UI 与实际版本创建流程尚未实现。
+
+甘特图只校验可排期的业务结构；最早开始为从 0 起算的偏移，普通任务工期为正、里程碑为零。排期器属于会话二，本会话中的布局/排期仅为契约和合成项目样例。
+
+任务与事件只驻留内存，重启丢失；最多保留 100 个任务，完成任务超过 1 小时后在创建新任务时清理。每次输出上限 200,000 字符。临时诊断只保存任务 ID、阶段和尝试次数，不记录输入、输出或 Key；位于系统临时目录，最多 2 MB，正常退出删除本次文件，启动时删除已退出进程的同类遗留文件，同时保留仍在运行的进程文件。
+
+上述文字长度、数值范围、超时、心跳、任务保留和日志大小均为集中管理的临时技术参数，不代表已确认产品参数。
+
+下一会话以前置质量检查通过为条件，接入 SSE 工作台、ELK Worker、确定性甘特排期、SVG、编辑和内存版本链路。项目文件操作、正式导出、设置页与真实模型/浏览器全链路验收留在会话三。

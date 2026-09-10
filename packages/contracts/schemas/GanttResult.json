@@ -1,0 +1,236 @@
+{
+  "$defs": {
+    "GanttDependency": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Target",
+          "type": "string"
+        },
+        "type": {
+          "const": "FS",
+          "title": "Type",
+          "type": "string"
+        },
+        "lag": {
+          "maximum": 1000000,
+          "minimum": -1000000,
+          "title": "Lag",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "type",
+        "lag"
+      ],
+      "title": "GanttDependency",
+      "type": "object"
+    },
+    "GanttSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "diagram_type": {
+          "const": "gantt",
+          "title": "Diagram Type",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Title",
+          "type": "string"
+        },
+        "time_unit": {
+          "enum": [
+            "calendar_day",
+            "week",
+            "month"
+          ],
+          "title": "Time Unit",
+          "type": "string"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/GanttTask"
+          },
+          "minItems": 1,
+          "title": "Tasks",
+          "type": "array"
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/GanttDependency"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "diagram_type",
+        "title",
+        "time_unit",
+        "tasks",
+        "dependencies"
+      ],
+      "title": "GanttSpec",
+      "type": "object",
+      "x-domain": "gantt"
+    },
+    "GanttTask": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Text",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "task",
+            "milestone"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "duration": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Duration",
+          "type": "number"
+        },
+        "earliest_start": {
+          "anyOf": [
+            {
+              "maximum": 1000000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Earliest Start"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "kind",
+        "duration",
+        "earliest_start"
+      ],
+      "title": "GanttTask",
+      "type": "object",
+      "x-domain": "task"
+    },
+    "Supplement": {
+      "additionalProperties": false,
+      "properties": {
+        "target_type": {
+          "enum": [
+            "node",
+            "edge",
+            "task",
+            "dependency"
+          ],
+          "title": "Target Type",
+          "type": "string"
+        },
+        "target_id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Reason",
+          "type": "string"
+        },
+        "question": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "\\S",
+          "title": "Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_type",
+        "target_id",
+        "reason",
+        "question"
+      ],
+      "title": "Supplement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "spec": {
+      "$ref": "#/$defs/GanttSpec"
+    },
+    "supplements": {
+      "items": {
+        "$ref": "#/$defs/Supplement"
+      },
+      "title": "Supplements",
+      "type": "array"
+    },
+    "summary": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Summary",
+      "type": "string"
+    }
+  },
+  "required": [
+    "spec",
+    "supplements",
+    "summary"
+  ],
+  "title": "GanttResult",
+  "type": "object",
+  "x-domain": "result",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

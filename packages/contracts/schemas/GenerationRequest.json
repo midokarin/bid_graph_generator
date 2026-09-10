@@ -1,0 +1,42 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "diagram_type": {
+      "enum": [
+        "flowchart",
+        "gantt"
+      ],
+      "title": "Diagram Type",
+      "type": "string"
+    },
+    "source_text": {
+      "maxLength": 50000,
+      "minLength": 1,
+      "pattern": "\\S",
+      "title": "Source Text",
+      "type": "string"
+    },
+    "direction": {
+      "default": "DOWN",
+      "enum": [
+        "DOWN",
+        "RIGHT"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "additional_requirements": {
+      "default": "",
+      "maxLength": 50000,
+      "title": "Additional Requirements",
+      "type": "string"
+    }
+  },
+  "required": [
+    "diagram_type",
+    "source_text"
+  ],
+  "title": "GenerationRequest",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
