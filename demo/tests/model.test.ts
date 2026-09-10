@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyProposal,blockers,canDownload,makeSnapshot,propose,readSaved,restore} from '../src/model.ts';
-import {useWorkspace} from '../src/store.ts';
+import {MAX_HISTORY,useWorkspace} from '../src/store.ts';
 test('two examples start as unconfirmed drafts',()=>{for(const kind of ['flowchart','gantt'] as const){const s=makeSnapshot(kind);assert.equal(s.confirmed,false);assert.equal(s.revision,1);assert.equal(canDownload(s,null),false)}});
 test('proposal leaves original intact; applying creates a new revision',()=>{const s=makeSnapshot('gantt');const p=propose(s,'项目实施改为 24 天');assert.equal(s.duration,20);assert.match(p.impact,/27/);const n=applyProposal(s,p);assert.equal(n.duration,24);assert.equal(n.revision,2);assert.equal(s.duration,20)});
 test('overrun blocks download even after a check',()=>{const s=applyProposal(makeSnapshot('gantt'),propose(makeSnapshot('gantt'),'项目实施改为 29 天'));assert.equal(blockers(s).length,1);assert.equal(canDownload(s,s.revision),false)});
@@ -12,6 +12,13 @@ test('unsupported free text is explicitly rejected',()=>assert.throws(()=>propos
 test('restoring creates a new revision and retains prior history',()=>{const a=makeSnapshot('gantt'),b=applyProposal(a,propose(a,'项目实施改为 24 天')),history=[a,b];const c=restore(history);assert.equal(c.revision,3);assert.equal(c.duration,20);assert.equal(history.length,2);assert.throws(()=>restore([a]),/暂无/)});
 test('saved snapshots roundtrip and malformed data is rejected',()=>{const history=[makeSnapshot('gantt')];assert.deepEqual(readSaved(JSON.stringify(history)),history);assert.throws(()=>readSaved('[{}]'));assert.throws(()=>readSaved('[]'));assert.throws(()=>readSaved(JSON.stringify([{...history[0],duration:-1}])))});
 test('store invalidates checks after changes and tracks save state',()=>{const w=useWorkspace.getState();w.replace([makeSnapshot('flowchart')]);w.check();assert.equal(useWorkspace.getState().checked,1);w.append({...makeSnapshot('flowchart'),revision:2});assert.equal(useWorkspace.getState().checked,null);assert.equal(useWorkspace.getState().dirty,true);w.saved();assert.equal(useWorkspace.getState().dirty,false)});
+test('version queue keeps the newest eight and can select an older version',()=>{
+ const first=makeSnapshot('flowchart');useWorkspace.getState().replace([first]);
+ for(let i=2;i<=10;i++)useWorkspace.getState().append({...first,title:`版本 ${i}`,revision:i});
+ let state=useWorkspace.getState();assert.equal(state.history.length,MAX_HISTORY);assert.deepEqual(state.history.map(item=>item.revision),[3,4,5,6,7,8,9,10]);assert.equal(state.activeRevision,10);
+ state.select(5);state=useWorkspace.getState();assert.equal(state.activeRevision,5);state.check();assert.equal(useWorkspace.getState().checked,5);
+ state.append({...state.history.find(item=>item.revision===5)!,title:'基于历史的新版本'});state=useWorkspace.getState();assert.equal(state.activeRevision,11);assert.equal(state.history.at(-1)?.title,'基于历史的新版本');assert.deepEqual(state.history.map(item=>item.revision),[4,5,6,7,8,9,10,11]);
+});
 test('font rules cannot be bypassed through a patch',()=>{const s=makeSnapshot('flowchart');assert.throws(()=>applyProposal(s,{baseRevision:1,field:'fontSize',before:12,after:10,impact:''}),/12/)});
 
 test('optional agent check shares visible state and validates input',async()=>{const {checkVisibleDiagram}=await import('../src/webmcp.ts');useWorkspace.getState().replace([]);assert.throws(()=>checkVisibleDiagram({}),/先/);useWorkspace.getState().replace([makeSnapshot('gantt')]);assert.throws(()=>checkVisibleDiagram({skip:true}),/参数/);const result=checkVisibleDiagram({});assert.equal(result.revision,1);assert.equal(result.projectCompliance,'unverified');assert.equal(useWorkspace.getState().checked,1)});
@@ -69,4 +76,8 @@ test('workspace shows three steps and template cards instead of review sidebar',
 test('workspace includes a compact expandable runtime stream',async()=>{
  const {createElement}=await import('react');const {renderToStaticMarkup}=await import('react-dom/server');const {default:App}=await import('../src/App.tsx');useWorkspace.getState().replace([]);
  const html=renderToStaticMarkup(createElement(App));assert.match(html,/aria-label="运行详情"/);assert.match(html,/等待生成任务/);assert.match(html,/程序、LLM 与渲染器/);assert.match(html,/aria-expanded="false"/);
+});
+test('version history renders selectable entries with diagram thumbnails',async()=>{
+ const {createElement}=await import('react');const {renderToStaticMarkup}=await import('react-dom/server');const {VersionHistory}=await import('../src/VersionHistory.tsx');const one=makeSnapshot('flowchart'),two={...makeSnapshot('gantt'),revision:2,title:'第二版'};
+ const html=renderToStaticMarkup(createElement(VersionHistory,{history:[one,two],currentRevision:one.revision,onSelect:()=>{},onRestore:()=>{}}));assert.equal((html.match(/class="version-card/g)||[]).length,2);assert.equal((html.match(/class="version-thumbnail/g)||[]).length,2);assert.match(html,/aria-pressed="true"/);assert.match(html,/最多保留 8 个版本/);
 });

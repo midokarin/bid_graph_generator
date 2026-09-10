@@ -1,0 +1,39 @@
+import { RotateCcw } from 'lucide-react';
+import { Diagram } from './Diagram';
+import type { Snapshot } from './model';
+import { MAX_HISTORY } from './store';
+
+type Props = {
+  history: Snapshot[];
+  currentRevision: number | null;
+  onSelect: (snapshot: Snapshot) => void;
+  onRestore: () => void;
+};
+
+export function VersionHistory({ history, currentRevision, onSelect, onRestore }: Props) {
+  return <>
+    <h2>版本记录</h2>
+    <p className="muted">点击条目切换查看。按时间顺序最多保留 {MAX_HISTORY} 个版本。</p>
+    {history.length === 0
+      ? <p className="empty-history">尚未生成图表。</p>
+      : <div className="version-list">
+          {[...history].reverse().map(item => <button
+            className={`version-card ${currentRevision === item.revision ? 'selected' : ''}`}
+            type="button"
+            key={item.revision}
+            aria-pressed={currentRevision === item.revision}
+            onClick={() => onSelect(item)}
+          >
+            <span className="version-details">
+              <span className="version-title"><strong>v{item.revision}</strong>{currentRevision === item.revision && <span className="small-tag">当前查看</span>}</span>
+              <span className="version-name">{item.title}</span>
+              <span className="version-summary">{item.kind === 'flowchart' ? '流程图' : `甘特图 · ${item.duration + 3} 天`} · {item.fontSize} 磅</span>
+            </span>
+            <span className={`version-thumbnail ${item.kind}`} style={{ background: item.appearance.backgroundColor }} aria-hidden="true">
+              <Diagram snapshot={item}/>
+            </span>
+          </button>)}
+        </div>}
+    <button className="button full" disabled={history.length < 2} onClick={onRestore}><RotateCcw size={15}/>将上一版恢复为新版本</button>
+  </>;
+}
