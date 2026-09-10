@@ -4,6 +4,7 @@ import { Diagram } from './Diagram';
 import {TemplatePanel} from './TemplatePanel';
 import {TEMPLATES,templateProposal} from './templates';
 import {StyleSettings,describeChange} from './StyleSettings';
+import { RunStream, type RunEvent, type RunSource, type RunStatus } from './RunStream';
 import { registerDiagramTools } from './webmcp';
 import { applyProposal, blockers, canDownload, makeSnapshot, readSaved, restore, SAMPLES, type Kind, type Proposal } from './model';
 import { useWorkspace } from './store';
@@ -13,6 +14,7 @@ export default function App(){
  const [kind,setKind]=useState<Kind>('flowchart'),[text,setText]=useState(SAMPLES.flowchart.text),[title,setTitle]=useState(SAMPLES.flowchart.title),[bidMode,setBidMode]=useState('unknown'),[page,setPage]=useState('A4'),[orientation,setOrientation]=useState('portrait');
  const [panel,setPanel]=useState<'input'|'style'>('input'),[templateId,setTemplateId]=useState('classic');
  const [toast,setToast]=useState(''),[busy,setBusy]=useState(false),[proposal,setProposal]=useState<Proposal|null>(null),[modal,setModal]=useState<'export'|'help'|'replace'|'history'|null>(null),[png,setPng]=useState(''),[zoom,setZoom]=useState(100),[inputDirty,setInputDirty]=useState(false);
+ const [runStatus,setRunStatus]=useState<RunStatus>('idle'),[runEvents,setRunEvents]=useState<RunEvent[]>([]),[runExpanded,setRunExpanded]=useState(false);
  const svgRef=useRef<SVGSVGElement>(null),dialogRef=useRef<HTMLDialogElement>(null);
  const notify=(message:string)=>setToast(message);
  useEffect(registerDiagramTools,[]);
@@ -23,14 +25,30 @@ export default function App(){
  const preview=current??{...makeSnapshot(kind,title),appearance:{...TEMPLATES.find(t=>t.id===templateId)!.appearance}};
  function selectTemplate(id:string){if(current){const p=templateProposal(current,id);if(p.before!==p.after)setProposal(p);}else{setTemplateId(id);setInputDirty(true);}}
  function sample(k:Kind){setKind(k);setText(SAMPLES[k].text);setTitle(SAMPLES[k].title);setInputDirty(true);}
+ const wait=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
+ const elapsed=(startedAt:number)=>`${((Date.now()-startedAt)/1000).toFixed(1)}s`;
  async function generate(force=false){
   if(!text.trim())return notify('请先输入业务内容。');
   if(text!==SAMPLES[kind].text)return notify('本演示只生成内置示例。请点击“载入示例”；自定义文本识别需要后续接入模型。');
   if(current&&!force){setModal('replace');return;}
-  setModal(null);setBusy(true);
-  await new Promise(r=>setTimeout(r,600));
-  const s={...makeSnapshot(kind,title),appearance:{...preview.appearance},bidMode,page,orientation,revision:current?current.revision+1:1};
-  if(current)append(s);else replace([s]);setInputDirty(false);setBusy(false);notify('示例草稿已生成，可直接编辑或选择右侧样式模板。');
+  setModal(null);setBusy(true);setRunStatus('running');setRunEvents([]);
+  const startedAt=Date.now();let eventId=0;
+  const pushEvent=(source:RunSource,message:string,level:RunEvent['level']='info')=>setRunEvents(events=>[...events,{id:++eventId,elapsed:elapsed(startedAt),source,message,level}]);
+  try{
+   pushEvent('程序','已接收图表生成请求');
+   await wait(320);pushEvent('程序','正在整理业务步骤与页面参数');
+   await wait(420);pushEvent('LLM','正在分析内容并生成图表结构');
+   await wait(620);pushEvent('LLM',kind==='flowchart'?'已返回 8 个节点及整改回路':'已返回 3 项任务及依赖关系','success');
+   await wait(380);pushEvent('程序','结构校验通过，正在准备预览','success');
+   await wait(450);pushEvent('渲染器','正在计算布局并绘制图形');
+   await wait(460);
+   const s={...makeSnapshot(kind,title),appearance:{...preview.appearance},bidMode,page,orientation,revision:current?current.revision+1:1};
+   if(current)append(s);else replace([s]);setInputDirty(false);
+   pushEvent('渲染器','预览已生成，可继续编辑','success');setRunStatus('success');
+   notify('示例草稿已生成，可直接编辑或选择右侧样式模板。');
+  }catch(e){
+   pushEvent('程序',(e as Error).message||'生成过程中断','error');setRunStatus('error');setRunExpanded(true);notify('生成失败，请展开运行详情查看。');
+  }finally{setBusy(false);}
  }
  function apply(){if(!current||!proposal)return;try{append(applyProposal(current,proposal));setProposal(null);notify('修改已应用，已保留上一版。');}catch(e){notify((e as Error).message)}}
  function save(){try{localStorage.setItem(KEY,JSON.stringify(history));saved();notify('图表版本已保存到当前浏览器；未生成的输入不在保存范围内。')}catch{notify('浏览器存储不可用，保存失败。')}}
@@ -54,7 +72,7 @@ export default function App(){
    <div className="source-note"><CircleHelp size={14}/><span>当前为内置示例，内容不代表真实项目要求。</span></div></>:<><h3>文档插图版式</h3><p className="muted">默认值仅用于演示，以实际招标规则为准。</p><label className="field-label" htmlFor="paper">目标纸型</label><select id="paper" value={page} onChange={e=>{setPage(e.target.value);setInputDirty(true)}}><option>A4</option><option>A3</option></select><label className="field-label" htmlFor="orientation">页面方向</label><select id="orientation" value={orientation} onChange={e=>{setOrientation(e.target.value);setInputDirty(true)}}><option value="portrait">竖向</option><option value="landscape">横向</option></select><div className="setting-summary"><span>插入宽度<strong>160 mm</strong></span><span>输出分辨率<strong>300 DPI</strong></span><span>配色<strong>支持自定义</strong></span></div><label className="field-label" htmlFor="font-size">图内字号</label><select id="font-size" value={current?.fontSize??12} disabled={!current} onChange={e=>current&&setProposal({baseRevision:current.revision,field:'fontSize',before:current.fontSize,after:Number(e.target.value),impact:'全图文字统一调整；业务内容不变。确认后需重新检查。'})}><option value="12">12 磅</option><option value="14">14 磅</option><option value="16">16 磅</option></select><p className="source-note">字号调整会先展示差异。纸型和方向在重新生成时记录，实际纸面适配仍待验证。</p><StyleSettings snapshot={current} onPropose={setProposal}/></>}
    </div><div className="generate-footer"><button className="button primary generate" disabled={busy} onClick={()=>generate()}>{busy?<LoaderCircle size={18} className="spin"/>:<Sparkles size={18}/>} {busy?'正在载入示例…':current?'重新生成草稿':'生成图表草稿'}<ArrowRight size={17}/></button><span>示例生成 · 不调用 AI 服务</span></div>
   </section>
-  <section className="preview-panel panel"><div className="preview-toolbar"><div><span className="status-dot"/><strong>图表预览</strong><span className="sub-badge">{current?`v${current.revision}`:'示例'}</span></div><div className="canvas-toolbar-actions"><button className="icon-button" disabled={!current} title={current?.locked?'解除业务内容保护':'保护业务内容'} aria-label={current?.locked?'解除业务内容保护':'保护业务内容'} aria-pressed={current?.locked??false} onClick={()=>append({...current!,locked:!current!.locked,revision:current!.revision+1})}>{current?.locked?<LockKeyhole size={17}/>:<UnlockKeyhole size={17}/>}</button><button className="icon-button" title="恢复适配视图" aria-label="恢复适配视图" onClick={()=>setZoom(100)}><Maximize2 size={17}/></button></div></div>{current&&checked===current.revision&&<div className={errors.length?"canvas-check-result has-errors":"canvas-check-result"} role="status">{errors.length?errors.join(" "):"演示检查完成 · 实际项目适用性未核验"}</div>}<div className="canvas-area"><div className="canvas-info"><span>{current?.page??page} · {(current?.orientation??orientation)==='portrait'?'竖向':'横向'} · 160 mm</span><span>{current?'工作草稿':'示例效果预览'}</span></div><div className="paper-wrap"><div className={'paper '+((current?.kind??kind)==='gantt'?'gantt-paper':'')} style={{width:`${zoom}%`,background:preview.appearance.backgroundColor}}><div className="paper-heading" style={{fontFamily:preview.appearance.fontFamily,color:preview.appearance.textColor}}>{current?.title??title}</div><Diagram key={current?.revision??`preview-${kind}`} snapshot={preview} svgRef={svgRef} onPropose={current?setProposal:undefined}/></div></div><div className="canvas-bottom"><span><LockKeyhole size={13}/>{!current?'生成后可编辑':current.kind==='flowchart'?'双击文字编辑 · 拖动节点调整位置':'双击任务名称编辑 · 工期定位'}</span><div className="zoom-controls"><button aria-label="缩小" disabled={zoom<=60} onClick={()=>setZoom(z=>z-10)}><Minus size={14}/></button><span>{zoom}%</span><button aria-label="放大" disabled={zoom>=150} onClick={()=>setZoom(z=>z+10)}><Plus size={14}/></button></div></div></div>
+  <section className="preview-panel panel"><div className="preview-toolbar"><div><span className="status-dot"/><strong>图表预览</strong><span className="sub-badge">{current?`v${current.revision}`:'示例'}</span></div><div className="canvas-toolbar-actions"><button className="icon-button" disabled={!current} title={current?.locked?'解除业务内容保护':'保护业务内容'} aria-label={current?.locked?'解除业务内容保护':'保护业务内容'} aria-pressed={current?.locked??false} onClick={()=>append({...current!,locked:!current!.locked,revision:current!.revision+1})}>{current?.locked?<LockKeyhole size={17}/>:<UnlockKeyhole size={17}/>}</button><button className="icon-button" title="恢复适配视图" aria-label="恢复适配视图" onClick={()=>setZoom(100)}><Maximize2 size={17}/></button></div></div><RunStream status={runStatus} events={runEvents} expanded={runExpanded} onExpandedChange={setRunExpanded}/>{current&&checked===current.revision&&<div className={errors.length?"canvas-check-result has-errors":"canvas-check-result"} role="status">{errors.length?errors.join(" "):"演示检查完成 · 实际项目适用性未核验"}</div>}<div className="canvas-area"><div className="canvas-info"><span>{current?.page??page} · {(current?.orientation??orientation)==='portrait'?'竖向':'横向'} · 160 mm</span><span>{current?'工作草稿':'示例效果预览'}</span></div><div className="paper-wrap"><div className={'paper '+((current?.kind??kind)==='gantt'?'gantt-paper':'')} style={{width:`${zoom}%`,background:preview.appearance.backgroundColor}}><div className="paper-heading" style={{fontFamily:preview.appearance.fontFamily,color:preview.appearance.textColor}}>{current?.title??title}</div><Diagram key={current?.revision??`preview-${kind}`} snapshot={preview} svgRef={svgRef} onPropose={current?setProposal:undefined}/></div></div><div className="canvas-bottom"><span><LockKeyhole size={13}/>{!current?'生成后可编辑':current.kind==='flowchart'?'双击文字编辑 · 拖动节点调整位置':'双击任务名称编辑 · 工期定位'}</span><div className="zoom-controls"><button aria-label="缩小" disabled={zoom<=60} onClick={()=>setZoom(z=>z-10)}><Minus size={14}/></button><span>{zoom}%</span><button aria-label="放大" disabled={zoom>=150} onClick={()=>setZoom(z=>z+10)}><Plus size={14}/></button></div></div></div>
   </section>
   <TemplatePanel snapshot={preview} onSelect={selectTemplate} onCustomize={()=>setPanel('style')}/>
   </main><footer className="workspace-footer"><span><ShieldCheck size={13}/>资料仅留在当前浏览器 · 保存需手动操作</span><span>PNG 图片输出 <span className="footer-dot">·</span> 自定义文档插图</span></footer>

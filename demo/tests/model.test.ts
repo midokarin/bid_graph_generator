@@ -66,3 +66,7 @@ test('workspace shows three steps and template cards instead of review sidebar',
  const html=renderToStaticMarkup(createElement(App));assert.match(html,/样式与模板/);assert.match(html,/商务蓝/);assert.match(html,/极简线框/);assert.match(html,/检查图表/);assert.doesNotMatch(html,/核对规则|class="review-panel|class="review-tabs/);assert.equal((html.match(/class="step-number"/g)||[]).length,3);
  const ids=[...html.matchAll(/<marker id="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,5);assert.equal(new Set(ids).size,5);
 });
+test('workspace includes a compact expandable runtime stream',async()=>{
+ const {createElement}=await import('react');const {renderToStaticMarkup}=await import('react-dom/server');const {default:App}=await import('../src/App.tsx');useWorkspace.getState().replace([]);
+ const html=renderToStaticMarkup(createElement(App));assert.match(html,/aria-label="运行详情"/);assert.match(html,/等待生成任务/);assert.match(html,/程序、LLM 与渲染器/);assert.match(html,/aria-expanded="false"/);
+});
