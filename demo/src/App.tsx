@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, ArrowLeft, ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, ClipboardList, FileText, FolderOpen, GitBranch, History, LayoutGrid, ListChecks, LoaderCircle, LockKeyhole, Maximize2, Minus, Plus, RotateCcw, Save, Send, Settings2, ShieldCheck, Sparkles, UnlockKeyhole, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowLeft, ArrowRight, Check, CheckCheck, ChevronDown, CircleHelp, ClipboardList, FileText, FolderOpen, GitBranch, History, LayoutGrid, LoaderCircle, LockKeyhole, Maximize2, Minus, Plus, RotateCcw, Save, Send, Settings2, ShieldCheck, Sparkles, UnlockKeyhole, X } from 'lucide-react';
 import { Diagram } from './Diagram';
 import {TemplatePanel} from './TemplatePanel';
 import {TEMPLATES,templateProposal} from './templates';
 import {StyleSettings,describeChange} from './StyleSettings';
 import { RunStream, type RunEvent, type RunSource, type RunStatus } from './RunStream';
 import { registerDiagramTools } from './webmcp';
-import { applyProposal, blockers, canDownload, makeSnapshot, readSaved, restore, SAMPLES, type Kind, type Proposal } from './model';
+import { applyProposal, blockers, makeSnapshot, readSaved, restore, SAMPLES, type Kind, type Proposal } from './model';
 import { useWorkspace } from './store';
 const KEY='biaohui-demo-v1';
 export default function App(){
@@ -53,7 +53,7 @@ export default function App(){
  function apply(){if(!current||!proposal)return;try{append(applyProposal(current,proposal));setProposal(null);notify('修改已应用，已保留上一版。');}catch(e){notify((e as Error).message)}}
  function save(){try{localStorage.setItem(KEY,JSON.stringify(history));saved();notify('图表版本已保存到当前浏览器；未生成的输入不在保存范围内。')}catch{notify('浏览器存储不可用，保存失败。')}}
  function reopen(){if(dirty||inputDirty){if(!window.confirm('打开已保存的项目会替换当前未保存内容，是否继续？'))return;}try{const raw=localStorage.getItem(KEY);if(!raw)return notify('还没有保存的项目。先生成并保存一份图表。');const h=readSaved(raw);replace(h,false);const s=h.at(-1)!;setKind(s.kind);setTitle(s.title);setText(s.source);setBidMode(s.bidMode);setPage(s.page);setOrientation(s.orientation);setInputDirty(false);notify('已打开浏览器中保存的项目。')}catch{notify('保存的数据无法读取，当前内容未更改。')}}
- async function exportPreview(){if(!current||!canDownload(current,checked))return notify('请先完成当前版本检查，并处理阻断问题。');
+ async function exportPreview(){if(!current)return notify('请先生成图表草稿。');check();if(blockers(current).length)return notify('当前图表存在阻断问题，请处理后再下载。');
   try{await document.fonts.ready;const clone=svgRef.current!.cloneNode(true) as SVGSVGElement;clone.querySelectorAll('[data-editor]').forEach(node=>node.remove());const svg=new XMLSerializer().serializeToString(clone);const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
    try{const img=new Image();await new Promise<void>((resolve,reject)=>{img.onload=()=>resolve();img.onerror=()=>reject(new Error('图片渲染失败，请重试。'));img.src=url});const canvas=document.createElement('canvas');canvas.width=1890;canvas.height=Math.round(1890*(current.kind==='flowchart'?660/760:420/900));const ctx=canvas.getContext('2d');if(!ctx)throw new Error('此浏览器暂不支持图片导出。');ctx.fillStyle=current.appearance.backgroundColor;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);setPng(canvas.toDataURL('image/png'));setModal('export');}finally{URL.revokeObjectURL(url)}
   }catch(e){notify((e as Error).message)}
@@ -61,7 +61,7 @@ export default function App(){
  const stage=!current?0:checked===current.revision?2:1;
  return <div className="app-shell">
   <aside className="rail"><a className="brand-mark" href="#" aria-label="标绘工作台"><GitBranch size={24}/></a><div className="rail-divider"/><button className="rail-item active" aria-label="图表工作台" onClick={()=>setPanel('input')}><LayoutGrid size={21}/><span>工作台</span></button><button className="rail-item" onClick={reopen} aria-label="打开已保存项目"><FolderOpen size={21}/><span>本地项目</span></button><button className="rail-item" onClick={()=>setModal('history')}><History size={21}/><span>版本记录</span></button><div className="rail-bottom"><button className="rail-item" onClick={()=>setModal('help')}><CircleHelp size={21}/><span>使用说明</span></button><div className="avatar">演示</div></div></aside>
-  <div className="workspace"><header><div className="header-title"><strong>标绘<span> / </span></strong><span>标书图表工作台</span><span className="demo-badge">交互 Demo</span></div><div className="header-actions"><span className="save-status"><i/>{dirty?'有未保存的图表':current?'已保存到本机':'本地演示空间'}</span><button className="button" disabled={!current} onClick={save}><Save size={16}/>保存项目</button><button className="button" disabled={!current} onClick={()=>{check();notify(errors.length?errors.join(" "):"演示检查完成，可下载草稿；实际项目适用性仍未核验。");}}><ListChecks size={16}/>检查图表</button><button className="button primary" disabled={!current||checked!==current.revision||errors.length>0} onClick={exportPreview}><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></header>
+  <div className="workspace"><header><div className="header-title"><strong>标绘<span> / </span></strong><span>标书图表工作台</span><span className="demo-badge">交互 Demo</span></div><div className="header-actions"><span className="save-status"><i/>{dirty?'有未保存的图表':current?'已保存到本机':'本地演示空间'}</span><button className="button" disabled={!current} onClick={save}><Save size={16}/>保存项目</button><button className="button primary" disabled={!current} onClick={exportPreview}><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></header>
   <div className="project-heading"><div><div className="eyebrow">DIAGRAM STUDIO</div><h1>把方案，变成清晰的图表。</h1><p>从业务内容到文档插图，每一步都可核对、可修改。</p></div><div className="local-pill"><span/>模拟数据 · 无需连接后端</div></div>
   <nav className="steps" aria-label="制作流程">{['输入内容','预览与修改','检查与下载'].map((label,i)=><div className={i===stage?'step selected':i<stage?'step done':'step'} key={label}><span className="step-number">{i<stage?<Check size={14}/>:String(i+1).padStart(2,'0')}</span><span>{label}</span>{i<2&&<span className="step-line"/>}</div>)}</nav>
   <main className="editor-grid"><section className="input-panel panel"><div className="panel-tabs"><button className={panel==='input'?'selected':''} onClick={()=>setPanel('input')}><FileText size={16}/>内容输入</button><button className={panel==='style'?'selected':''} onClick={()=>setPanel('style')}><Settings2 size={16}/>版式设置</button></div>
