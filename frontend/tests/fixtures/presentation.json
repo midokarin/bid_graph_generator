@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0",
+  "diagram_type": "flowchart",
+  "title": "项目实施与验收流程",
+  "direction": "DOWN",
+  "nodes": [
+    {
+      "id": "n0",
+      "text": "接收项目需求",
+      "type": "start",
+      "level": 0,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "n1",
+      "text": "需求分析与确认",
+      "type": "process",
+      "level": 1,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "n2",
+      "text": "编制实施方案",
+      "type": "process",
+      "level": 2,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "n3",
+      "text": "组织项目实施",
+      "type": "process",
+      "level": 3,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "n4",
+      "text": "质量检查",
+      "type": "decision",
+      "level": 4,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "n5",
+      "text": "交付验收",
+      "type": "process",
+      "level": 5,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "n6",
+      "text": "项目结束",
+      "type": "end",
+      "level": 6,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "n7",
+      "text": "问题整改",
+      "type": "process",
+      "level": 7,
+      "owner": null,
+      "phase": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "source": "n0",
+      "target": "n1",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e1",
+      "source": "n1",
+      "target": "n2",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e2",
+      "source": "n2",
+      "target": "n3",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e3",
+      "source": "n3",
+      "target": "n4",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e4",
+      "source": "n4",
+      "target": "n5",
+      "label": "合格",
+      "kind": "normal"
+    },
+    {
+      "id": "e5",
+      "source": "n5",
+      "target": "n6",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e6",
+      "source": "n4",
+      "target": "n7",
+      "label": "不合格",
+      "kind": "normal"
+    },
+    {
+      "id": "e7",
+      "source": "n7",
+      "target": "n4",
+      "label": "返回检查",
+      "kind": "rework"
+    }
+  ]
+}

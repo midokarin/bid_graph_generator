@@ -15,8 +15,8 @@ export function flowGraph(spec: FlowchartSpec): ElkNode {
     'elk.edgeRouting':'ORTHOGONAL','elk.padding':'[top=35,left=35,bottom=35,right=35]',
     'elk.layered.spacing.nodeNodeBetweenLayers':'65','elk.spacing.nodeNode':'55',
     'elk.layered.considerModelOrder.strategy':'NODES_AND_EDGES'},
-    children:spec.nodes.map(n=>({id:n.id,width:n.type==='decision'?220:240,
-      height:n.type==='decision'?140:Math.max(60,wrapText(n.text).length*26+24)})),
+    children:spec.nodes.map(n=>({id:n.id,width:n.type==='decision'?Math.max(300,Math.min(12,Array.from(n.text).length)*40+16):320,
+      height:n.type==='decision'?Math.max(148,wrapText(n.text).length*52+60):Math.max(68,wrapText(n.text).length*28+32)})),
     edges:spec.edges.map(e=>({id:e.id,sources:[e.source],targets:[e.target],
       labels:e.label?[{text:e.label,width:Math.max(25,e.label.length*18),height:24}]:[]}))};
 }

@@ -2,7 +2,11 @@ import ELK from 'elkjs/lib/elk-api.js';
 import workerUrl from 'elkjs/lib/elk-worker.min.js?url';
 import type {FlowchartSpec,FlowLayout} from '../domain/generated/ProjectFile';
 import {flowGraph,readLayout} from './flow';
+import {presentationLayout} from './presentation';
 export function layoutFlow(spec:FlowchartSpec,signal?:AbortSignal):Promise<FlowLayout>{
+ if(signal?.aborted)return Promise.reject(new DOMException('已取消','AbortError'));
+ const presentation=presentationLayout(spec);
+ if(presentation)return Promise.resolve(presentation);
  return new Promise((resolve,reject)=>{
   const elk=new ELK({workerFactory:()=>new Worker(workerUrl)});
   const finish=()=>{clearTimeout(timer);elk.terminateWorker();signal?.removeEventListener('abort',abort)};

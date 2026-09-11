@@ -1,6 +1,7 @@
 import json
 
 FLOWCHART_PROMPT = """把业务文字整理为流程图 JSON。只返回符合给定 Schema 的最终 JSON，不输出推理、代码、SVG、HTML 或 Mermaid。
+节点 text 必须保留完整且可读的业务短语，如“需求分析与确认”，不得截成首字、首词或无意义缩写。分支 label 使用完整条件，如“合格”“不合格”。
 最多 20 个节点。使用六种受控节点类型。审核若无分支使用 process，有分支才使用 decision。
 允许多分支、整改回路；返回整改关系必须标记 kind=rework。保持 ID 唯一、引用完整。
 提供层级意图，不提供像素坐标。用户方向：{direction}，不得改变。

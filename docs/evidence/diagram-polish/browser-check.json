@@ -1,0 +1,37 @@
+{
+  "labels": [
+    {
+      "contained": true,
+      "label": "接收项目需求"
+    },
+    {
+      "contained": true,
+      "label": "需求分析与确认"
+    },
+    {
+      "contained": true,
+      "label": "编制实施方案"
+    },
+    {
+      "contained": true,
+      "label": "组织项目实施"
+    },
+    {
+      "contained": true,
+      "label": "质量检查"
+    },
+    {
+      "contained": true,
+      "label": "交付验收"
+    },
+    {
+      "contained": true,
+      "label": "项目结束"
+    },
+    {
+      "contained": true,
+      "label": "问题整改"
+    }
+  ],
+  "overlay": false
+}
