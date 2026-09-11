@@ -26,6 +26,7 @@ export function App({host=standaloneAdapter}:{host?:HostAdapter}){
  const [panel,setPanel]=useState<'input'|'style'>('input'),[templateId,setTemplateId]=useState('classic');
  const [toast,setToast]=useState(''),[busy,setBusy]=useState(false),[proposal,setProposal]=useState<Proposal|null>(null),[modal,setModal]=useState<'export'|'help'|'replace'|'history'|'settings'|'files'|'open-confirm'|null>(null),[zoom,setZoom]=useState(100),[inputDirty,setInputDirty]=useState(false),[locked,setLocked]=useState(false);
  const [runStatus,setRunStatus]=useState<RunStatus>('idle'),[runEvents,setRunEvents]=useState<RunEvent[]>([]),[runExpanded,setRunExpanded]=useState(false),[attempts,setAttempts]=useState<Record<number,string>>({}),[provider,setProvider]=useState('连接中');
+ const [runStartedAt,setRunStartedAt]=useState<number|null>(null);
  const [exportOptions,setExportOptions]=useState<ExportOptions>(DEFAULT_EXPORT);
  const fileContexts=useRef<Partial<Record<Kind,{handle:ProjectHandle|null;metadata:ProjectFile['metadata'];source:string;title:string;options:ExportOptions}>>>({});
  const latestProject=useRef<ProjectFile|null>(null);
@@ -52,20 +53,32 @@ export function App({host=standaloneAdapter}:{host?:HostAdapter}){
   if(busy)return;if(!text.trim())return notify('请先输入业务内容。');
   if(current&&!force){setModal('replace');return}
   setModal(null);setBusy(true);setRunStatus('running');setRunEvents([]);setAttempts({});
-  const control=new AbortController();controller.current=control;const started=Date.now();let id=0;let result:any=null;let tasks:ScheduledTask[]|null=null;
-  const push=(message:string,source:RunEvent['source']='程序',level:RunEvent['level']='info')=>setRunEvents(events=>[...events,{id:++id,elapsed:`${((Date.now()-started)/1000).toFixed(1)}s`,source,message,level}]);
+  const control=new AbortController();controller.current=control;const started=Date.now();setRunStartedAt(started);let id=0;let result:any=null;let tasks:ScheduledTask[]|null=null;
+  const push=(message:string,source:RunEvent['source']='程序',level:RunEvent['level']='info',details?:unknown)=>{const entry={id:++id,elapsed:`${((Date.now()-started)/1000).toFixed(1)}s`,source,message,level,details};setRunEvents(events=>[...events,entry])};
   try{
-   push('正在理解内容');const job=await createGeneration({diagram_type:kind,source_text:text,direction});jobRef.current=job.job_id;
+   push('正在整理业务步骤与页面参数');const job=await createGeneration({diagram_type:kind,source_text:text,direction});jobRef.current=job.job_id;
    if(control.signal.aborted){await cancelGeneration(job.job_id);throw new Error('已取消生成')}
    await consumeGeneration(job.events_url,({event,data})=>{
     if(event==='delta')setAttempts(a=>({...a,[data.attempt]:(a[data.attempt]??'')+data.text}));
-    if(event==='status')push(({queued:'正在理解内容',generating:'正在生成结构',validating:'正在校验',repairing:'正在修复',completed:'校验通过',cancelled:'已取消',failed:'生成失败'} as Record<string,string>)[data.state]??data.state);
-    if(event==='schedule')tasks=data.tasks;
-    if(event==='result')result=data;
-    if(event==='error'||event==='validation_error')push(JSON.stringify(data),'程序','error');
+    if(event==='status'){
+     if(data.state==='queued')push('任务已创建，等待生成');
+     if(data.state==='generating'||data.state==='repairing'){
+      setAttempts(a=>({...a,[data.attempt]:a[data.attempt]??''}));
+      push(data.state==='generating'?'正在分析内容并生成图表结构':`正在进行第 ${data.attempt} 次结构修复`,'LLM');
+     }
+     if(data.state==='validating')push('模型输出已接收，正在校验图表结构');
+     if(data.state==='completed')push('结构校验通过，正在准备预览','程序','success');
+    }
+    if(event==='schedule'){tasks=data.tasks;push('已完成任务排期与依赖计算','程序','success')}
+    if(event==='result'){
+     result=data;
+     push(data.spec.diagram_type==='flowchart'?`已返回 ${data.spec.nodes.length} 个节点、${data.spec.edges.length} 条连线`:`已返回 ${data.spec.tasks.filter((task:{kind:string})=>task.kind==='task').length} 项任务、${data.spec.tasks.filter((task:{kind:string})=>task.kind==='milestone').length} 个里程碑`,'LLM','success');
+    }
+    if(event==='validation_error')push('结构校验未通过，可展开查看原因','程序','error',data);
+    if(event==='error')push(data.message??'生成遇到问题，可展开查看原因','程序','error',data);
    },control.signal);
    if(!result||!(kind==='flowchart'?validateFlowchartResult(result):validateGanttResult(result)))throw new Error('返回结果未通过前端契约校验。');
-   push('正在布局','渲染器');
+   push(kind==='flowchart'?'正在计算布局并绘制图形':'正在绘制任务与里程碑','渲染器');
    const spec=structuredClone(result.spec) as FlowchartSpec|GanttSpec;spec.title=title.trim()||spec.title;
    if(spec.diagram_type==='flowchart')spec.direction=direction;
    const layout=spec.diagram_type==='flowchart'?await layoutFlow(spec,control.signal):{diagram_type:'gantt' as const,width:900,height:Math.max(420,168+spec.tasks.length*84),tasks:tasks??[]};
@@ -73,7 +86,7 @@ export function App({host=standaloneAdapter}:{host?:HostAdapter}){
    if(control.signal.aborted)throw new Error('已取消生成');
    append({revision:1,created_at:new Date().toISOString(),origin:'ai',spec,layout,style:current?.version.style??{...DEFAULT_STYLE,...withAppearance(view(example),preview.appearance).version.style},supplements:result.supplements,summary:result.summary});
    setInputDirty(false);push('预览已生成，可继续编辑','渲染器','success');setRunStatus('success');notify('草稿已生成，已创建完整版本快照。');
-  }catch(e){push((e as Error).message,'程序','error');setRunStatus('error');setRunExpanded(true);notify((e as Error).message)}
+  }catch(e){const cancelled=control.signal.aborted;const message=cancelled?'已取消生成，未创建新版本':(e as Error).message;push(message,'程序',cancelled?'info':'error');setRunStatus(cancelled?'cancelled':'error');setRunExpanded(true);notify(message)}
   finally{setBusy(false);jobRef.current=null;controller.current=null}
  }
  async function cancel(){controller.current?.abort();if(jobRef.current)await cancelGeneration(jobRef.current).catch(()=>notify('取消请求未送达，本页已忽略后续结果。'))}
@@ -115,7 +128,7 @@ export function App({host=standaloneAdapter}:{host?:HostAdapter}){
    <div className="source-note"><CircleHelp size={14}/><span>当前为内置示例，内容不代表真实项目要求。</span></div></>:<><h3>文档插图版式</h3><p className="muted">版式参数暂存于工作台，以实际招标规则为准。</p><label className="field-label" htmlFor="paper">目标纸型</label><select id="paper" value={page} onChange={e=>{setPage(e.target.value);changeInput(true)}}><option>A4</option><option>A3</option></select><label className="field-label" htmlFor="orientation">页面方向</label><select id="orientation" value={orientation} onChange={e=>{setOrientation(e.target.value);changeInput(true)}}><option value="portrait">竖向</option><option value="landscape">横向</option></select><div className="setting-summary"><span>插入宽度<strong>160 mm</strong></span><span>输出分辨率<strong>300 DPI</strong></span><span>配色<strong>支持自定义</strong></span></div><label className="field-label" htmlFor="font-size">图内字号</label><select id="font-size" value={current?.fontSize??12} disabled={!current||busy} onChange={e=>current&&setProposal({baseRevision:current.revision,field:'fontSize',before:current.fontSize,after:Number(e.target.value),impact:'全图文字统一调整；业务内容不变。确认后需重新检查。'})}><option value="12">12 磅</option><option value="14">14 磅</option><option value="16">16 磅</option></select><p className="source-note">字号调整会先展示差异。纸型和方向用于导出；长图保持单张输出。</p><StyleSettings snapshot={current} onPropose={setProposal}/></>}
    </div><div className="generate-footer">{kind==='flowchart'&&<select aria-label="流程布局方向" value={direction} disabled={busy} onChange={e=>{setDirection(e.target.value as 'DOWN'|'RIGHT');changeInput(true)}}><option value="DOWN">从上到下</option><option value="RIGHT">从左到右</option></select>}{busy&&<button className="text-button" onClick={cancel}>取消生成</button>}<button className="button primary generate" disabled={busy} onClick={()=>generate()}>{busy?<LoaderCircle size={18} className="spin"/>:<Sparkles size={18}/>} {busy?'正在生成…':current?'重新生成草稿':'生成图表草稿'}<ArrowRight size={17}/></button><span>{provider} · 完整校验后布局</span></div>
   </section>
-  <section className="preview-panel panel"><div className="preview-toolbar"><div><span className="status-dot"/><strong>图表预览</strong><span className="sub-badge">{current?`v${current.revision}`:'示例'}</span>{current&&current.version.supplements.length>0&&<span className="sub-badge" title={current.version.summary}>AI 补充</span>}</div><div className="canvas-toolbar-actions"><button className="icon-button" disabled={!current||busy} title={locked?'解除业务内容保护':'保护业务内容'} aria-label={locked?'解除业务内容保护':'保护业务内容'} aria-pressed={locked??false} onClick={()=>setLocked(v=>!v)}>{locked?<LockKeyhole size={17}/>:<UnlockKeyhole size={17}/>}</button>{current?.kind==='flowchart'&&<button className="icon-button" disabled={busy} title="重新布局" aria-label="重新布局" onClick={relayout}><RotateCcw size={17}/></button>}<button className="icon-button" title="恢复适配视图" aria-label="恢复适配视图" onClick={()=>setZoom(100)}><Maximize2 size={17}/></button></div></div><RunStream attempts={attempts} status={runStatus} events={runEvents} expanded={runExpanded} onExpandedChange={setRunExpanded}/><div className="canvas-area"><div className="canvas-info"><span>{page} · {(orientation)==='portrait'?'竖向':'横向'} · 160 mm</span><span>{current?'工作草稿':'示例效果预览'}</span></div><div className="paper-wrap"><div className={'paper '+((current?.kind??kind)==='gantt'?'gantt-paper':'')} style={{width:`${zoom}%`,background:preview.version.style.transparent_background?'transparent':preview.appearance.backgroundColor}}><div className="paper-heading" style={{fontFamily:preview.appearance.fontFamily,color:preview.appearance.textColor}}>{current?.title??title}</div><Diagram key={current?.revision??`preview-${kind}`} snapshot={preview} svgRef={svgRef} locked={locked} onPropose={current&&!busy?setProposal:undefined}/></div></div><div className="canvas-bottom"><span><LockKeyhole size={13}/>{!current?'生成后可编辑':current.kind==='flowchart'?'双击文字编辑 · 拖动节点调整位置':'双击任务名称编辑 · 工期定位'}</span><div className="zoom-controls"><button aria-label="缩小" disabled={zoom<=60} onClick={()=>setZoom(z=>z-10)}><Minus size={14}/></button><span>{zoom}%</span><button aria-label="放大" disabled={zoom>=150} onClick={()=>setZoom(z=>z+10)}><Plus size={14}/></button></div></div></div>
+  <section className="preview-panel panel"><div className="preview-toolbar"><div><span className="status-dot"/><strong>图表预览</strong><span className="sub-badge">{current?`v${current.revision}`:'示例'}</span>{current&&current.version.supplements.length>0&&<span className="sub-badge" title={current.version.summary}>AI 补充</span>}</div><div className="canvas-toolbar-actions"><button className="icon-button" disabled={!current||busy} title={locked?'解除业务内容保护':'保护业务内容'} aria-label={locked?'解除业务内容保护':'保护业务内容'} aria-pressed={locked??false} onClick={()=>setLocked(v=>!v)}>{locked?<LockKeyhole size={17}/>:<UnlockKeyhole size={17}/>}</button>{current?.kind==='flowchart'&&<button className="icon-button" disabled={busy} title="重新布局" aria-label="重新布局" onClick={relayout}><RotateCcw size={17}/></button>}<button className="icon-button" title="恢复适配视图" aria-label="恢复适配视图" onClick={()=>setZoom(100)}><Maximize2 size={17}/></button></div></div><RunStream startedAt={runStartedAt} attempts={attempts} status={runStatus} events={runEvents} expanded={runExpanded} onExpandedChange={setRunExpanded}/><div className="canvas-area"><div className="canvas-info"><span>{page} · {(orientation)==='portrait'?'竖向':'横向'} · 160 mm</span><span>{current?'工作草稿':'示例效果预览'}</span></div><div className="paper-wrap"><div className={'paper '+((current?.kind??kind)==='gantt'?'gantt-paper':'')} style={{width:`${zoom}%`,background:preview.version.style.transparent_background?'transparent':preview.appearance.backgroundColor}}><div className="paper-heading" style={{fontFamily:preview.appearance.fontFamily,color:preview.appearance.textColor}}>{current?.title??title}</div><Diagram key={current?.revision??`preview-${kind}`} snapshot={preview} svgRef={svgRef} locked={locked} onPropose={current&&!busy?setProposal:undefined}/></div></div><div className="canvas-bottom"><span><LockKeyhole size={13}/>{!current?'生成后可编辑':current.kind==='flowchart'?'双击文字编辑 · 拖动节点调整位置':'双击任务名称编辑 · 工期定位'}</span><div className="zoom-controls"><button aria-label="缩小" disabled={zoom<=60} onClick={()=>setZoom(z=>z-10)}><Minus size={14}/></button><span>{zoom}%</span><button aria-label="放大" disabled={zoom>=150} onClick={()=>setZoom(z=>z+10)}><Plus size={14}/></button></div></div></div>
   </section>
   <TemplatePanel snapshot={preview} onSelect={selectTemplate} onCustomize={()=>setPanel('style')}/>
   </main><footer className="workspace-footer"><span><ShieldCheck size={13}/>项目手动保存 · 关闭前注意未保存内容</span><span>PNG / SVG <span className="footer-dot">·</span> 自定义文档插图</span></footer>
