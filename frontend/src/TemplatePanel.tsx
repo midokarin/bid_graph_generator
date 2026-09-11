@@ -12,7 +12,6 @@ export function TemplatePanel({snapshot,onSelect,onCustomize}:{snapshot:Snapshot
  return <section className="template-panel panel" aria-label="样式与模板">
   <div className="template-heading"><Palette size={18}/><strong>样式与模板</strong><span>{templates.length}</span></div>
   <div className="template-scroll">
-   <p className="template-intro">按标书场景选择，字体、线框与图形细节一起搭配。</p>
    <div className="template-filters" role="group" aria-label="模板场景">{categories.map(c=><button key={c} aria-pressed={category===c} onClick={()=>setFilter(c)}>{c}</button>)}</div>
    <div className="template-cards">{shown.map(t=>{const selected=JSON.stringify(snapshot.appearance)===JSON.stringify(t.appearance);return <button key={t.id} className={'template-card '+(selected?'selected':'')} aria-pressed={selected} onClick={()=>onSelect(t.id)}>
     <div className="template-thumbnail" aria-hidden="true" style={{background:t.appearance.backgroundColor}}><Diagram snapshot={withAppearance(snapshot,t.appearance)}/></div>

@@ -159,13 +159,13 @@
 .multi-generate-toggle input::before{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;background:white;border-radius:50%;transition:transform .15s}
 .multi-generate-toggle input:checked{background:var(--green)}.multi-generate-toggle input:checked::before{transform:translateX(13px)}
 .generate-footer .multi-generate-hint{font-size:10px;line-height:1.6;margin:4px 0 8px;text-align:left}
-.candidate-return{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);font-size:10px;color:var(--muted)}
+.candidate-return{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);font-size:10px;color:var(--muted)}
 .candidate-return .text-button{font-size:11px;flex-shrink:0}
 .canvas-area:has(>.candidate-panel){padding:0}
 .candidate-panel{padding:16px;min-width:0;width:100%;overflow:auto}
 .candidate-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px}
 .candidate-heading>span{font-size:11px;color:var(--muted);white-space:nowrap}
-.candidate-hint{font-size:11px;line-height:1.8;color:var(--muted);margin:10px 0 16px}
+.candidate-heading{margin-bottom:16px}
 .candidate-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;align-items:start}
 .candidate-card{background:white;border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
 .candidate-label{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:32px;font-size:12px;line-height:1.6}

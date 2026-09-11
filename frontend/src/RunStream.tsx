@@ -59,7 +59,7 @@ export function RunStream({ status, events, expanded, onExpandedChange, attempts
   return <section className={`run-stream ${expanded ? 'expanded' : ''} ${status}`} aria-label="运行详情">
     <button className="run-stream-summary" type="button" aria-expanded={expanded} aria-controls={logId} onClick={() => onExpandedChange(!expanded)}>
       <span className="run-stream-state"><StatusIcon size={15} className={status === 'running' ? 'spin' : ''}/><strong>{statusCopy[status]}</strong></span>
-      <span className="run-stream-latest" aria-live="polite">{latest?.message ?? '生成时将在这里显示程序、LLM 与渲染器的消息'}</span>
+      <span className="run-stream-latest" aria-live="polite">{latest?.message ?? '准备中'}</span>
       <span className="run-stream-time">{elapsed}</span>
       {expanded ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
     </button>
