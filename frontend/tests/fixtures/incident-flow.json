@@ -1,0 +1,308 @@
+{
+  "schema_version": "1.0",
+  "diagram_type": "flowchart",
+  "title": "故障处置流程（截图重建测试样例）",
+  "direction": "DOWN",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "接收报障并建立工单",
+      "type": "start",
+      "level": 0,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "record",
+      "text": "记录故障现象、发生时间及影响范围",
+      "type": "process",
+      "level": 1,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "grade",
+      "text": "故障分级判断",
+      "type": "decision",
+      "level": 2,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "two",
+      "text": "部分业务功能异常且核心可用，判为二级故障",
+      "type": "decision",
+      "level": 3,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "one",
+      "text": "核心业务整体不可用，判为一级故障",
+      "type": "process",
+      "level": 4,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "three",
+      "text": "一般操作或咨询问题，判为三级工单",
+      "type": "process",
+      "level": 5,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "urgent",
+      "text": "值班经理启动应急响应",
+      "type": "process",
+      "level": 6,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "guide",
+      "text": "服务台提供操作指导",
+      "type": "process",
+      "level": 7,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "solved",
+      "text": "操作指导能否解决问题",
+      "type": "decision",
+      "level": 8,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "direct",
+      "text": "技术组直接排查并修复故障",
+      "type": "process",
+      "level": 9,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "backup",
+      "text": "技术组切换备用服务",
+      "type": "process",
+      "level": 10,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "repair",
+      "text": "技术组排查并修复故障",
+      "type": "process",
+      "level": 11,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "test",
+      "text": "测试人员执行恢复验证",
+      "type": "process",
+      "level": 12,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "verified",
+      "text": "恢复验证是否通过",
+      "type": "decision",
+      "level": 13,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "confirm",
+      "text": "用户确认问题解决",
+      "type": "process",
+      "level": 14,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "accepted",
+      "text": "用户是否确认解决",
+      "type": "decision",
+      "level": 15,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "log",
+      "text": "服务台整理处置记录并更新知识库",
+      "type": "process",
+      "level": 16,
+      "owner": null,
+      "phase": null
+    },
+    {
+      "id": "end",
+      "text": "关闭工单",
+      "type": "end",
+      "level": 17,
+      "owner": null,
+      "phase": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "source": "start",
+      "target": "record",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e1",
+      "source": "record",
+      "target": "grade",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e2",
+      "source": "grade",
+      "target": "two",
+      "label": "二级",
+      "kind": "normal"
+    },
+    {
+      "id": "e3",
+      "source": "grade",
+      "target": "one",
+      "label": "一级",
+      "kind": "normal"
+    },
+    {
+      "id": "e4",
+      "source": "grade",
+      "target": "three",
+      "label": "三级",
+      "kind": "normal"
+    },
+    {
+      "id": "e5",
+      "source": "one",
+      "target": "urgent",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e6",
+      "source": "urgent",
+      "target": "backup",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e7",
+      "source": "backup",
+      "target": "repair",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e8",
+      "source": "two",
+      "target": "direct",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e9",
+      "source": "three",
+      "target": "guide",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e10",
+      "source": "guide",
+      "target": "solved",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e11",
+      "source": "solved",
+      "target": "direct",
+      "label": "无法解决",
+      "kind": "normal"
+    },
+    {
+      "id": "e12",
+      "source": "solved",
+      "target": "confirm",
+      "label": "能",
+      "kind": "normal"
+    },
+    {
+      "id": "e13",
+      "source": "direct",
+      "target": "test",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e14",
+      "source": "repair",
+      "target": "test",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e15",
+      "source": "test",
+      "target": "verified",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e16",
+      "source": "verified",
+      "target": "repair",
+      "label": "验证失败",
+      "kind": "rework"
+    },
+    {
+      "id": "e17",
+      "source": "verified",
+      "target": "confirm",
+      "label": "验证通过",
+      "kind": "normal"
+    },
+    {
+      "id": "e18",
+      "source": "confirm",
+      "target": "accepted",
+      "label": null,
+      "kind": "normal"
+    },
+    {
+      "id": "e19",
+      "source": "accepted",
+      "target": "repair",
+      "label": "问题仍然存在",
+      "kind": "rework"
+    },
+    {
+      "id": "e20",
+      "source": "accepted",
+      "target": "log",
+      "label": "用户确认解决",
+      "kind": "normal"
+    },
+    {
+      "id": "e21",
+      "source": "log",
+      "target": "end",
+      "label": null,
+      "kind": "normal"
+    }
+  ]
+}

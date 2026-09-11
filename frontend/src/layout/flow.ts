@@ -1,5 +1,6 @@
 import type { ElkNode } from 'elkjs/lib/elk-api';
 import type { FlowchartSpec, FlowLayout } from '../domain/generated/ProjectFile';
+import {orderedBranches} from './branch-order';
 export const TEXT_LIMITS = { flow: 60, task: 60, line: 12, lines: 5, horizontalLine: 8, horizontalLines: 8 } as const;
 export function wrapText(text:string, lineLength:number=TEXT_LIMITS.line){
   const lines:string[]=[];
@@ -23,13 +24,23 @@ export function nodeSize(node:FlowchartSpec['nodes'][number],direction:Flowchart
     height:node.type==='decision'?Math.max(148,lines.length*52+60):Math.max(68,lines.length*28+32)};
 }
 export function flowGraph(spec: FlowchartSpec): ElkNode {
-  return {id:'root', layoutOptions:{'elk.algorithm':'layered','elk.direction':spec.direction,
+  const graph:ElkNode={id:'root', layoutOptions:{'elk.algorithm':'layered','elk.direction':spec.direction,
     'elk.edgeRouting':'ORTHOGONAL','elk.padding':'[top=35,left=35,bottom=35,right=35]',
     'elk.layered.spacing.nodeNodeBetweenLayers':'65','elk.spacing.nodeNode':'55',
     'elk.layered.considerModelOrder.strategy':'NODES_AND_EDGES'},
     children:spec.nodes.map(n=>({id:n.id,...nodeSize(n,spec.direction)})),
     edges:spec.edges.map(e=>({id:e.id,sources:[e.source],targets:[e.target],
       labels:e.label?[{text:e.label,width:Math.max(25,e.label.length*18),height:24}]:[]}))};
+  for(const branches of orderedBranches(spec)){
+    const node=graph.children!.find(n=>n.id===branches[0].source)!;
+    node.layoutOptions={'elk.portConstraints':'FIXED_ORDER'};
+    // ELK numbers ports clockwise: SOUTH is right-to-left, EAST top-to-bottom.
+    node.ports=branches.map((edge,index)=>({id:`${node.id}:branch:${edge.id}`,width:0,height:0,
+      layoutOptions:{'elk.port.side':spec.direction==='DOWN'?'SOUTH':'EAST',
+        'elk.port.index':String(spec.direction==='DOWN'?branches.length-1-index:index)}}));
+    for(const [index,edge] of branches.entries())graph.edges!.find(e=>e.id===edge.id)!.sources=[node.ports[index].id];
+  }
+  return graph;
 }
 export function readLayout(spec: FlowchartSpec, graph: ElkNode): FlowLayout {
   const result:FlowLayout={diagram_type:'flowchart', direction:spec.direction,width:graph.width!,height:graph.height!,
@@ -58,6 +69,11 @@ export function readLayout(spec: FlowchartSpec, graph: ElkNode): FlowLayout {
         const t=(lo+hi)/2;p.y=(1-t)**3*(n.y+n.height-12)+3*(1-t)**2*t*(n.y+n.height-32)+3*(1-t)*t*t*(n.y+n.height+12)+t**3*(n.y+n.height-12);
       }
     }
+  }
+  // ELK can express the same orthogonal coordinate with different floating
+  // point tails. Normalize those before crossing checks and subsequent edits.
+  for(const edge of result.edges)for(const point of edge.points){
+    point.x=Math.round(point.x*1e6)/1e6;point.y=Math.round(point.y*1e6)/1e6;
   }
   return result;
 }
