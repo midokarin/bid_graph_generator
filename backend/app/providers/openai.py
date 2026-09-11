@@ -5,15 +5,7 @@ import httpx
 from app.domain.limits import MAX_OUTPUT
 from app.settings import Settings
 from .base import ProviderError
-
-
-def native_schema(value):
-    """Keep local semantic annotations out of provider-specific schema subsets."""
-    if isinstance(value, dict):
-        return {key: native_schema(item) for key, item in value.items() if key not in {"x-domain", "discriminator", "$schema"}}
-    if isinstance(value, list):
-        return [native_schema(item) for item in value]
-    return value
+from .schema import native_schema
 
 
 class OpenAIProvider:

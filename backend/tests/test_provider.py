@@ -50,6 +50,8 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(payload["stream"])
         self.assertTrue(payload["response_format"]["json_schema"]["strict"])
         self.assertNotIn("x-domain", json.dumps(payload["response_format"]))
+        self.assertNotIn('"pattern": "\\\\S"', json.dumps(payload["response_format"]))
+        self.assertNotIn("pattern", payload["response_format"]["json_schema"]["schema"]["$defs"]["FlowNode"]["properties"]["text"])
         self.assertNotIn("tools", payload)
         self.assertTrue(stream.closed)
 
