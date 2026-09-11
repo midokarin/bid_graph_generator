@@ -32,9 +32,9 @@ const switchTo=title=>button(`切换任务：${title}`).click();
 const waitFor=async predicate=>{const until=Date.now()+10000;while(!predicate()){assert.ok(Date.now()<until,'condition timed out');await new Promise(r=>setTimeout(r,20))}};
 const start=async(title,kind='flowchart')=>{
  if(kind==='gantt')await button('甘特图').click();
- await visible().getByRole('textbox',{name:'图题',exact:true}).fill(title);
+ await visible().getByRole('textbox',{name:/^图题/}).fill(title);
  await visible().getByRole('textbox',{name:'业务内容 *',exact:true}).fill(`合成验证 ${title}`);
- await button('生成图表草稿').click();await waitFor(()=>jobs.at(-1)?.release);
+ const count=jobs.length;await button('生成图表草稿').click();await waitFor(()=>jobs.length>count&&jobs.at(-1)?.release);
  return jobs.at(-1);
 };
 const complete=job=>{
@@ -85,7 +85,7 @@ try{
  await button('版本记录').click();await page.screenshot({path:`${out}/history-1920.png`});await button('关闭弹窗').click();
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:`${out}/mobile-390.png`});
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal page overflow');
- await button('新建任务').click();await visible().getByRole('textbox',{name:'图题',exact:true}).fill('移动端任务');
+ await button('新建任务').click();await visible().getByRole('textbox',{name:/^图题/}).fill('移动端任务');
  await switchTo('甘特任务 C');await history(['甘特任务 C']);
  const duplicates=await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(e=>e.id);return ids.filter((id,i)=>ids.indexOf(id)!==i)});
  assert.deepEqual(duplicates,[]);assert.deepEqual(errors,[]);

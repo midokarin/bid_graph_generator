@@ -1,0 +1,16 @@
+{
+  "provider": "synthetic SSE; no external model calls",
+  "checks": [
+    "rename background task without changing active task or chart title",
+    "trim names and reject blank names",
+    "cancel background generation without affecting another task",
+    "late cancelled result creates no version",
+    "save task name in project metadata",
+    "dismiss deletion preserves task",
+    "delete running background task cancels it",
+    "delete while create API is pending cancels late job",
+    "delete last task creates empty usable workspace",
+    "desktop and mobile management controls"
+  ],
+  "errors": []
+}

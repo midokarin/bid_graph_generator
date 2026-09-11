@@ -23,23 +23,43 @@ import type {VersionSnapshot,ScheduledTask,FlowchartSpec,GanttSpec} from './doma
 import flowExample from '../../packages/contracts/examples/flowchart-project.json';
 import ganttExample from '../../packages/contracts/examples/gantt-project.json';
 
-type WorkspaceTask={id:string;number:number;workspace:WorkspaceStore};
+type WorkspaceTask={id:string;number:number;name?:string;workspace:WorkspaceStore};
+type TaskControls={cancel:()=>Promise<void>};
 export function App({host=standaloneAdapter}:{host?:HostAdapter}){
  const [tasks,setTasks]=useState<WorkspaceTask[]>(()=>[{id:crypto.randomUUID(),number:1,workspace:useWorkspace}]);
  const [activeId,setActiveId]=useState(tasks[0].id);
  const [summaries,setSummaries]=useState<Record<string,TaskSummary>>({});
  const sequence=useRef(1);
+ const controls=useRef(new Map<string,TaskControls>());
+ const register=useCallback((id:string,control:TaskControls)=>{controls.current.set(id,control);return()=>{controls.current.delete(id)}},[]);
  const report=useCallback((id:string,summary:TaskSummary)=>setSummaries(previous=>({...previous,[id]:summary})),[]);
  function addTask(){
   const task={id:crypto.randomUUID(),number:++sequence.current,workspace:createWorkspace()};
   setTasks(previous=>[...previous,task]);setActiveId(task.id);
  }
- const navigation=<TaskList tasks={tasks.map(task=>({id:task.id,number:task.number,...summaries[task.id]}))} activeId={activeId} onSelect={setActiveId} onCreate={addTask}/>;
+ function renameTask(id:string,name:string){
+  const task=tasks.find(task=>task.id===id);if(!task||task.name===name)return;
+  task.workspace.getState().touch();
+  setTasks(previous=>previous.map(task=>task.id===id?{...task,name}:task));
+ }
+ function deleteTask(id:string){
+  const task=tasks.find(task=>task.id===id);if(!task)return;
+  const summary=summaries[id];
+  const name=task.name||summary?.title?.trim()||`任务 ${task.number}`;
+  if(!window.confirm(`删除“${name}”？\n${summary?.busy?'正在进行的生成会被取消。\n':''}${summary?.dirty?'该任务有未保存修改。\n':''}页面中的内容和版本记录将被移除，已保存的本地文件不受影响。`))return;
+  void controls.current.get(id)?.cancel();
+  const remaining=tasks.filter(task=>task.id!==id);
+  if(!remaining.length)remaining.push({id:crypto.randomUUID(),number:++sequence.current,workspace:createWorkspace()});
+  setTasks(remaining);
+  if(activeId===id)setActiveId(remaining[Math.min(tasks.indexOf(task),remaining.length-1)].id);
+  setSummaries(previous=>{const next={...previous};delete next[id];return next});
+ }
+ const navigation=<TaskList tasks={tasks.map(task=>({id:task.id,number:task.number,...summaries[task.id],name:task.name}))} activeId={activeId} onSelect={setActiveId} onCreate={addTask} onRename={renameTask} onDelete={deleteTask} onCancel={id=>{void controls.current.get(id)?.cancel()}}/>;
  // Keep task controllers and editing state mounted when another task is visible.
- return <>{tasks.map(task=><TaskWorkbench key={task.id} task={task} active={task.id===activeId} navigation={navigation} host={host} onReport={report}/>)}</>;
+ return <>{tasks.map(task=><TaskWorkbench key={task.id} task={task} active={task.id===activeId} navigation={navigation} host={host} onReport={report} onRegister={register}/>)}</>;
 }
 
-const TaskWorkbench=memo(function TaskWorkbench({task,active,navigation,host,onReport}:{task:WorkspaceTask;active:boolean;navigation:ReactNode;host:HostAdapter;onReport:(id:string,summary:TaskSummary)=>void}){
+const TaskWorkbench=memo(function TaskWorkbench({task,active,navigation,host,onReport,onRegister}:{task:WorkspaceTask;active:boolean;navigation:ReactNode;host:HostAdapter;onReport:(id:string,summary:TaskSummary)=>void;onRegister:(id:string,control:TaskControls)=>(()=>void)}){
  const useTaskWorkspace=task.workspace;
  const {versions,activeRevision,dirty,dirtyKinds,touch,markSaved,append,select,activate}=useTaskWorkspace();const history=useMemo(()=>historyViews(versions),[versions]);const current=history.find(v=>v.revision===activeRevision);
  const [kind,setKind]=useState<Kind>('flowchart'),[text,setText]=useState(task.number===1?SAMPLES.flowchart.text:''),[title,setTitle]=useState(''),[bidMode,setBidMode]=useState('unknown'),[direction,setDirection]=useState<'DOWN'|'RIGHT'>('DOWN');
@@ -72,12 +92,12 @@ const TaskWorkbench=memo(function TaskWorkbench({task,active,navigation,host,onR
  const fileContexts=useRef<Partial<Record<Kind,{handle:ProjectHandle|null;metadata:ProjectFile['metadata'];source:string;title:string;options:ExportOptions}>>>({});
  const latestProject=useRef<ProjectFile|null>(null);
  const metadata=fileContexts.current[kind]?.metadata??{};
- latestProject.current=current?{project_file_version:'1.0',diagram_type:kind,source_text:text,current_revision:activeRevision!,versions:versions as ProjectFile['versions'],metadata:{...metadata,export_options:exportOptions,draft_title:title,bid_mode:bidMode,draft_direction:direction}}:null;
+ latestProject.current=current?{project_file_version:'1.0',diagram_type:kind,source_text:text,current_revision:activeRevision!,versions:versions as ProjectFile['versions'],metadata:{...metadata,task_name:task.name??'',export_options:exportOptions,draft_title:title,bid_mode:bidMode,draft_direction:direction}}:null;
  const changeInput=(value:boolean)=>{setInputDirty(value);if(value)touch()};
  useEffect(()=>{if(task.number===1)host.getInitialText().then(value=>{if(value){setText(value);touch()}})},[host,task.number,touch]);
  const svgRef=useRef<SVGSVGElement>(null),dialogRef=useRef<HTMLDialogElement>(null),controller=useRef<AbortController|null>(null),jobRef=useRef<string|null>(null);
  const notify=(message:string)=>setToast(message);
- useEffect(()=>{getHealth().then(h=>setProvider(h.provider==='stub'?'替身模型':'已连接模型')).catch(()=>setProvider('后端未连接'));return()=>{controller.current?.abort();if(jobRef.current)void cancelGeneration(jobRef.current)}},[]);
+ useEffect(()=>{getHealth().then(h=>setProvider(h.provider==='stub'?'替身模型':'已连接模型')).catch(()=>setProvider('后端未连接'));return()=>{controller.current?.abort();if(jobRef.current)void cancelGeneration(jobRef.current).catch(()=>{})}},[]);
  useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),4500);return()=>clearTimeout(t)}},[toast]);
  useEffect(()=>{const handler=(e:BeforeUnloadEvent)=>{if(Object.values(dirtyKinds).some(Boolean)||inputDirty||pending||busy){e.preventDefault();e.returnValue=''}};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler)},[dirtyKinds,inputDirty,pending,busy]);
  useEffect(()=>{if(active&&modal)dialogRef.current?.showModal();else dialogRef.current?.close()},[active,modal]);
@@ -131,7 +151,8 @@ const TaskWorkbench=memo(function TaskWorkbench({task,active,navigation,host,onR
   finally{setBusy(false);jobRef.current=null;controller.current=null}
  }
  async function cancel(){controller.current?.abort();if(jobRef.current)await cancelGeneration(jobRef.current).catch(()=>notify('取消请求未送达，本页已忽略后续结果。'))}
- async function relayout(){if(guardDraft()||!current||busy||current.version.spec.diagram_type!=='flowchart')return;setBusy(true);const c=new AbortController();controller.current=c;try{const layout=await layoutFlow(current.version.spec,c.signal);append({...current.version,layout,origin:'relayout'});notify('已重新布局并创建新版本。')}catch(e){notify((e as Error).message)}finally{controller.current=null;setBusy(false)}}
+ useEffect(()=>onRegister(task.id,{cancel}),[task.id,onRegister]);
+ async function relayout(){if(guardDraft()||!current||busy||current.version.spec.diagram_type!=='flowchart')return;setBusy(true);const c=new AbortController();controller.current=c;try{const layout=await layoutFlow(current.version.spec,c.signal);if(c.signal.aborted)return;append({...current.version,layout,origin:'relayout'});notify('已重新布局并创建新版本。')}catch(e){notify((e as Error).message)}finally{controller.current=null;setBusy(false)}}
  function apply(){if(!current||!proposal||busy)return;try{append(applyProposal(current,proposal));setProposal(null);notify('修改已应用，已保留上一版。')}catch(e){notify((e as Error).message)}}
  async function save(){
   const project=latestProject.current;if(!project||busy||guardDraft())return;const serialized=JSON.stringify(project);setBusy(true);
@@ -151,7 +172,7 @@ const TaskWorkbench=memo(function TaskWorkbench({task,active,navigation,host,onR
  const stage=current?(modal==='export'?2:1):0;
  return <div className="app-shell task-workbench" hidden={!active} data-task-id={task.id}>
   <aside className="rail task-rail"><a className="brand-mark" href="#" aria-label="标绘工作台"><GitBranch size={24}/></a><div className="rail-divider"/><button className="rail-item active" aria-label="图表工作台" onClick={()=>setPanel('input')}><LayoutGrid size={21}/><span>工作台</span></button><button className="rail-item" disabled={busy} onClick={()=>{if(!guardDraft())setModal('history')}}><History size={21}/><span>版本记录</span></button>{active&&navigation}<div className="rail-bottom"><button className="rail-item" disabled={busy} onClick={()=>setModal('settings')}><Settings2 size={21}/><span>模型设置</span></button><button className="rail-item" onClick={()=>setModal('help')}><CircleHelp size={21}/><span>使用说明</span></button><div className="avatar">本地</div></div></aside>
-  <div className="workspace"><header><div className="header-title"><strong>标绘<span> / </span></strong><span className="active-task-title" title={title}>{title.trim()||`任务 ${task.number}`}</span><span className="demo-badge">本地工作台</span></div><div className="header-actions"><span className="save-status"><i/>{pending?'有待确认修改':dirty||inputDirty?'有未保存修改':current?'已保存':'本地工作空间'}</span><button className="button" disabled={!current||busy} onClick={()=>save()}><Save size={16}/>保存项目</button><button className="button primary" disabled={!current||busy} onClick={exportPreview}><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></header>
+  <div className="workspace"><header><div className="header-title"><strong>标绘<span> / </span></strong><span className="active-task-title" title={task.name||title}>{task.name||title.trim()||`任务 ${task.number}`}</span><span className="demo-badge">本地工作台</span></div><div className="header-actions"><span className="save-status"><i/>{pending?'有待确认修改':dirty||inputDirty?'有未保存修改':current?'已保存':'本地工作空间'}</span><button className="button" disabled={!current||busy} onClick={()=>save()}><Save size={16}/>保存项目</button><button className="button primary" disabled={!current||busy} onClick={exportPreview}><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></header>
   <div className="project-heading"><div><div className="eyebrow">DIAGRAM STUDIO</div><h1>把方案，变成清晰的图表。</h1><p>从业务内容到文档插图，每一步都可核对、可修改。</p></div><div className="local-pill"><span/>{provider} · 本机服务</div></div>
   <nav className="steps" aria-label="制作流程">{['输入内容','预览与修改','导出'].map((label,i)=><div className={i===stage?'step selected':i<stage?'step done':'step'} key={label} aria-current={i===stage?'step':undefined}>{i===2?<button className="step-action" disabled={!current||busy} onClick={exportPreview}><span className="step-number">03</span><span>{label}</span></button>:<><span className="step-number">{i<stage?<Check size={14}/>:String(i+1).padStart(2,'0')}</span><span>{label}</span><span className="step-line"/></>}</div>)}</nav>
   <main className="editor-grid"><section ref={stylePanelRef} className="input-panel panel"><div className="panel-tabs"><button className={panel==='input'?'selected':''} onClick={()=>setPanel('input')}><FileText size={16}/>内容输入</button><button className={panel==='style'?'selected':''} onClick={()=>setPanel('style')}><Settings2 size={16}/>版式设置</button></div>
@@ -168,6 +189,6 @@ const TaskWorkbench=memo(function TaskWorkbench({task,active,navigation,host,onR
   <TemplatePanel snapshot={current??preview} onSelect={selectTemplate} onCustomize={()=>setPanel('style')}/>
   </main><footer className="workspace-footer"><span><ShieldCheck size={13}/>项目手动保存 · 关闭前注意未保存内容</span><span>PNG / SVG <span className="footer-dot">·</span> 自定义文档插图</span></footer>
   </div>{toast&&<div role="status" className="toast"><CircleHelp size={18}/>{toast}<button aria-label="关闭提示" onClick={()=>setToast('')}><X size={15}/></button></div>}
-  <dialog ref={dialogRef} onCancel={()=>{setModal(null);setProposal(null)}}><button className="dialog-close icon-button" aria-label="关闭弹窗" onClick={()=>{setModal(null);setProposal(null)}}><X size={20}/></button>{modal==='settings'?<ModelSettings onSaved={()=>{setModal(null);setProvider('已连接模型');notify('模型配置已保存。')}}/>:modal==='export'?<><h2>图表输出预览</h2><p className="muted">v{current?.revision} · 使用当前快照中的图形与布局</p><div className="export-options"><label>图题<select aria-label="导出图题" value={String(exportOptions.includeTitle)} onChange={e=>changeExport({includeTitle:e.target.value==='true'})}><option value="true">包含图题</option><option value="false">不含图题</option></select></label><label>背景<select aria-label="导出背景" value={exportOptions.background} onChange={e=>changeExport({background:e.target.value as ExportOptions['background']})}><option value="white">白色</option><option value="transparent">透明</option><option value="custom">自定义</option></select></label>{exportOptions.background==='custom'&&<label>背景颜色<input aria-label="导出背景颜色" type="color" value={exportOptions.color} onChange={e=>changeExport({color:e.target.value})}/></label>}</div><div className="export-image">{current&&<ExportSheet snapshot={current} options={exportOptions}/>}</div><p className="scope-note">完整图片 · PNG 3 倍清晰度 · 长图不分页 · AI 补充不阻止导出</p><div className="dialog-actions"><button className="button" onClick={()=>setModal(null)}>返回编辑</button><button className="button" onClick={()=>exportFile('svg')}>下载 SVG</button><button className="button primary" onClick={()=>exportFile('png')}><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></>:modal==='history'?<VersionHistory taskName={title.trim()||`任务 ${task.number}`} history={history} currentRevision={current?.revision??null} onSelect={switchVersion} onRestore={()=>{current&&append({...current.version,origin:'restore'});setModal(null);notify('已恢复所查看版本内容，保存为新版本。');}}/>:modal==='replace'?<><h2>重新生成草稿？</h2><p className="muted">将使用左侧内容、图题和版式创建新版本。当前预览中的修改不会带入新草稿，历史版本保留。</p><div className="dialog-actions"><button className="button" onClick={()=>setModal(null)}>继续编辑</button><button className="button primary" onClick={()=>generate(true)}>确认重新生成</button></div></>:<><div className="dialog-symbol"><Sparkles size={24}/></div><h2>体验一张图表的完整流程</h2><ol className="help-steps"><li>选择流程图或甘特图，载入内置示例。</li><li>生成草稿，从右侧缩略图选择样式模板。</li><li>点击小锁解锁后，可点击标题修改图题、双击文字编辑或拖动节点；完成后点击确认，再应用本次修改。</li><li>在版式设置中调整字体、字号和线条，实时预览后应用；也可查看原版或撤销调整。</li><li>在左侧会话任务中新建任务，可同时生成多张图表；切换任务不会中断生成。</li><li>版本记录只显示当前任务、当前图种的完整快照。每个任务请分别保存项目。</li></ol><p className="scope-note">在模型设置中配置接口后即可生成。可通过顶部“保存项目”手动保存当前图表及版本，下载弹窗支持 PNG 和 SVG。</p><button className="button primary full" onClick={()=>setModal(null)}>开始体验 <ArrowRight size={16}/></button></>}</dialog>
+  <dialog ref={dialogRef} onCancel={()=>{setModal(null);setProposal(null)}}><button className="dialog-close icon-button" aria-label="关闭弹窗" onClick={()=>{setModal(null);setProposal(null)}}><X size={20}/></button>{modal==='settings'?<ModelSettings onSaved={()=>{setModal(null);setProvider('已连接模型');notify('模型配置已保存。')}}/>:modal==='export'?<><h2>图表输出预览</h2><p className="muted">v{current?.revision} · 使用当前快照中的图形与布局</p><div className="export-options"><label>图题<select aria-label="导出图题" value={String(exportOptions.includeTitle)} onChange={e=>changeExport({includeTitle:e.target.value==='true'})}><option value="true">包含图题</option><option value="false">不含图题</option></select></label><label>背景<select aria-label="导出背景" value={exportOptions.background} onChange={e=>changeExport({background:e.target.value as ExportOptions['background']})}><option value="white">白色</option><option value="transparent">透明</option><option value="custom">自定义</option></select></label>{exportOptions.background==='custom'&&<label>背景颜色<input aria-label="导出背景颜色" type="color" value={exportOptions.color} onChange={e=>changeExport({color:e.target.value})}/></label>}</div><div className="export-image">{current&&<ExportSheet snapshot={current} options={exportOptions}/>}</div><p className="scope-note">完整图片 · PNG 3 倍清晰度 · 长图不分页 · AI 补充不阻止导出</p><div className="dialog-actions"><button className="button" onClick={()=>setModal(null)}>返回编辑</button><button className="button" onClick={()=>exportFile('svg')}>下载 SVG</button><button className="button primary" onClick={()=>exportFile('png')}><ArrowDownToLine size={16}/>下载草稿 PNG</button></div></>:modal==='history'?<VersionHistory taskName={task.name||title.trim()||`任务 ${task.number}`} history={history} currentRevision={current?.revision??null} onSelect={switchVersion} onRestore={()=>{current&&append({...current.version,origin:'restore'});setModal(null);notify('已恢复所查看版本内容，保存为新版本。');}}/>:modal==='replace'?<><h2>重新生成草稿？</h2><p className="muted">将使用左侧内容、图题和版式创建新版本。当前预览中的修改不会带入新草稿，历史版本保留。</p><div className="dialog-actions"><button className="button" onClick={()=>setModal(null)}>继续编辑</button><button className="button primary" onClick={()=>generate(true)}>确认重新生成</button></div></>:<><div className="dialog-symbol"><Sparkles size={24}/></div><h2>体验一张图表的完整流程</h2><ol className="help-steps"><li>选择流程图或甘特图，载入内置示例。</li><li>生成草稿，从右侧缩略图选择样式模板。</li><li>点击小锁解锁后，可点击标题修改图题、双击文字编辑或拖动节点；完成后点击确认，再应用本次修改。</li><li>在版式设置中调整字体、字号和线条，实时预览后应用；也可查看原版或撤销调整。</li><li>在左侧会话任务中新建任务，可同时生成多张图表；切换任务不会中断生成。</li><li>版本记录只显示当前任务、当前图种的完整快照。每个任务请分别保存项目。</li></ol><p className="scope-note">在模型设置中配置接口后即可生成。可通过顶部“保存项目”手动保存当前图表及版本，下载弹窗支持 PNG 和 SVG。</p><button className="button primary full" onClick={()=>setModal(null)}>开始体验 <ArrowRight size={16}/></button></>}</dialog>
  </div>
 });

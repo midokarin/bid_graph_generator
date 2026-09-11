@@ -136,3 +136,18 @@
 .title-edit-button:hover{text-decoration:underline dotted;text-underline-offset:5px}
 .title-edit-button:focus-visible{outline:2px solid #719782;outline-offset:4px;border-radius:3px}
 .title-editor{font:inherit;letter-spacing:inherit;color:inherit;text-align:center;padding:3px 6px}
+
+.task-row{flex-shrink:0;border:1px solid transparent;border-radius:8px;min-width:0}
+.task-row.selected{background:#edf4ef;border-color:#dce8e0}
+.task-row-main{display:flex;align-items:center;min-width:0}
+.task-row .task-item{flex:1;min-width:0;border:0;padding-right:3px}
+.task-row .task-more{flex-shrink:0;width:27px;height:30px;margin-right:4px;color:#7c8e82}
+.task-row .task-more:hover,.task-row .task-more[aria-expanded=true]{background:#dfeae3;color:var(--green)}
+.task-actions{display:flex;flex-direction:column;gap:2px;padding:5px 7px 8px;border-top:1px solid var(--line)}
+.task-actions button{display:flex;align-items:center;gap:8px;padding:7px;border-radius:5px;text-align:left;font-size:11px}
+.task-actions button:hover{background:#e5eee8}.task-actions .delete-task{color:#a35d4c}
+.task-rename{padding:5px 9px 10px;border-top:1px solid var(--line)}
+.task-rename label{display:block;font-size:11px;color:#758379;line-height:2}
+.task-rename input{width:100%;min-width:0;margin:3px 0 8px;padding:6px;font-size:12px}
+.task-rename>div{display:flex;justify-content:space-between;gap:3px}.task-rename .text-button{font-size:10px;gap:3px}
+@media(max-width:700px){.task-row{width:180px}.task-row .task-item{width:auto}.task-list{align-items:flex-start}}
