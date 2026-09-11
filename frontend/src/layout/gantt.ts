@@ -12,6 +12,12 @@ export function ganttText(text:string,fontSize:number){
 }
 export const taskY=(row:number)=>116+row*84;
 export const timeX=(time:number,total:number)=>310+time/Math.max(1,total)*510;
+// Place intermediate ticks on whole units without rounding the actual endpoint.
+// Short schedules need fewer ticks so labels never repeat.
+export function ganttTicks(total:number){
+ const end=Math.max(1,total),intervals=Math.min(6,Math.floor(end));
+ return Array.from({length:intervals+1},(_,i)=>i===intervals?end:Math.round(i*end/intervals));
+}
 export function ganttDependencies(spec:GanttSpec,layout:GanttLayout,strokeWidth:number){
  const total=Math.max(1,...layout.tasks.map(t=>t.end));
  const boxes=new Map(layout.tasks.map(t=>{

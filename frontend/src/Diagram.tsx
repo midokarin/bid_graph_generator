@@ -2,7 +2,7 @@ import {useId,useMemo,useRef,useState} from 'react';
 import type {Snapshot,Proposal} from './model';
 import {moved} from './model';
 import {TEXT_LIMITS,flowLines} from './layout/flow';
-import {GANTT_TEXT,ganttText,ganttDependencies,timeX,taskY} from './layout/gantt';
+import {GANTT_TEXT,ganttText,ganttDependencies,ganttTicks,timeX,taskY} from './layout/gantt';
 import type {NodeGeometry} from './domain/generated/ProjectFile';
 export function Diagram({snapshot:s,svgRef,onPropose,locked=false}:{snapshot:Snapshot;svgRef?:React.Ref<SVGSVGElement>;onPropose?:(p:Proposal)=>void;locked?:boolean}){
  const {spec,style}=s.version; const a=s.appearance, font=s.fontSize*(spec.diagram_type==='flowchart'?1.8:1.4), arrow=useId(), hatch=useId();
@@ -44,7 +44,7 @@ export function Diagram({snapshot:s,svgRef,onPropose,locked=false}:{snapshot:Sna
  </>:spec.diagram_type==='gantt'&&layout.diagram_type==='gantt'?<>
  {a.ganttGrid==='banded'&&layout.tasks.filter(t=>t.row%2===0).map(t=><rect key={t.id} data-row-band={t.id} x="30" y={rowY(t.row)-36} width="810" height="84" fill={a.strokeColor} fillOpacity={0.07}/>)}
  <text x="35" y="43" fontSize="18">任务名称</text><text x="230" y="43" fontSize="16">工期</text>
- {Array.from({length:7},(_,i)=>i*total/6).map((n,i)=><g key={i}>{a.ganttGrid==='full'&&<line x1={tx(n)} y1={65} x2={tx(n)} y2={layout.height-88} stroke="#dddddd"/>}<text x={tx(n)} y={43} textAnchor="middle" fontSize={15}>{i===0?'起点':`${Number(n.toFixed(2))}${unit}`}</text></g>)}
+ {ganttTicks(total).map((n,i)=><g key={i} data-time-tick={n}>{a.ganttGrid==='full'&&<line x1={tx(n)} y1={65} x2={tx(n)} y2={layout.height-88} stroke="#dddddd"/>}<text x={tx(n)} y={43} textAnchor="middle" fontSize={15}>{i===0?'起点':`${n}${unit}`}</text></g>)}
  {layout.tasks.map(t=><line key={t.id} x1="30" x2="840" y1={rowY(t.row)-36} y2={rowY(t.row)-36} stroke="#dddddd"/>)}
  {dependencies.map((d,i)=><g key={d.id} data-dependency-id={d.id}>{line(path(d.points),true,dependencies.findIndex(other=>other.target===d.target)===i)}</g>)}
  {layout.tasks.map(t=>{const task=spec.tasks.find(n=>n.id===t.id)!;const y=rowY(t.row),label=ganttText(task.text,s.fontSize);return <g key={t.id} data-task-id={t.id} data-start={t.start} data-end={t.end}>
