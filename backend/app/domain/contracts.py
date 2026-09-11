@@ -232,6 +232,12 @@ class Style(StrictModel):
     transparent_background: bool
     stroke_width: Annotated[float, Field(ge=0.5, le=10)]
     corner_radius: Annotated[float, Field(ge=0, le=50)]
+    # Optional additions preserve the appearance of existing 1.0 projects.
+    font_weight: Literal[400, 600, 700] = 400
+    border_style: Literal["solid", "dashed"] = "solid"
+    node_accent: Literal["none", "top", "left"] = "none"
+    gantt_bar_style: Literal["solid", "outline", "hatched"] = "solid"
+    gantt_grid: Literal["full", "rows", "banded"] = "full"
 
 
 class VersionSnapshot(StrictModel):

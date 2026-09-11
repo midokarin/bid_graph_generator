@@ -1,0 +1,26 @@
+[
+  {
+    "kind": "flowchart",
+    "template": "technical",
+    "pngBytes": 272802,
+    "svgBytes": 5234,
+    "pngDimensions": [
+      2480,
+      3508
+    ],
+    "downloadAndUploadRoundtrip": true,
+    "errors": []
+  },
+  {
+    "kind": "gantt",
+    "template": "schedule-print",
+    "pngBytes": 345270,
+    "svgBytes": 5243,
+    "pngDimensions": [
+      2480,
+      3508
+    ],
+    "downloadAndUploadRoundtrip": true,
+    "errors": []
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "browser": "153.0.8010.36",
+  "provider": "stub",
+  "errors": [],
+  "flowTemplateCancelPreservesVersion": true,
+  "flowTemplateApplyPreservesSpecAndLayout": true,
+  "ganttTemplateBeforeGeneration": true,
+  "ganttTemplatePreservesSchedule": true,
+  "mobileNoHorizontalOverflow": true
+}

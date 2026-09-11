@@ -641,6 +641,55 @@
           "minimum": 0,
           "title": "Corner Radius",
           "type": "number"
+        },
+        "font_weight": {
+          "default": 400,
+          "enum": [
+            400,
+            600,
+            700
+          ],
+          "title": "Font Weight",
+          "type": "integer"
+        },
+        "border_style": {
+          "default": "solid",
+          "enum": [
+            "solid",
+            "dashed"
+          ],
+          "title": "Border Style",
+          "type": "string"
+        },
+        "node_accent": {
+          "default": "none",
+          "enum": [
+            "none",
+            "top",
+            "left"
+          ],
+          "title": "Node Accent",
+          "type": "string"
+        },
+        "gantt_bar_style": {
+          "default": "solid",
+          "enum": [
+            "solid",
+            "outline",
+            "hatched"
+          ],
+          "title": "Gantt Bar Style",
+          "type": "string"
+        },
+        "gantt_grid": {
+          "default": "full",
+          "enum": [
+            "full",
+            "rows",
+            "banded"
+          ],
+          "title": "Gantt Grid",
+          "type": "string"
         }
       },
       "required": [

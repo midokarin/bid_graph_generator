@@ -1,9 +1,9 @@
 import type {VersionSnapshot,Style,FlowLayout,FlowEdge} from './domain/generated/ProjectFile';
 import {TEXT_LIMITS,wrapText,flowLines} from './layout/flow';
 export type Kind='flowchart'|'gantt';
-export type Appearance={fontFamily:string;textColor:string;strokeColor:string;backgroundColor:string;fillColor:string;strokeWidth:number;cornerRadius:number};
+export type Appearance={fontFamily:string;textColor:string;strokeColor:string;backgroundColor:string;fillColor:string;strokeWidth:number;cornerRadius:number;fontWeight:400|600|700;borderStyle:'solid'|'dashed';nodeAccent:'none'|'top'|'left';ganttBarStyle:'solid'|'outline'|'hatched';ganttGrid:'full'|'rows'|'banded'};
 export const FONTS=['sans-serif','Arial','宋体','黑体','微软雅黑','PingFang SC'];
-export const DEFAULT_APPEARANCE:Appearance={fontFamily:'sans-serif',textColor:'#000000',strokeColor:'#000000',backgroundColor:'#FFFFFF',fillColor:'#FFFFFF',strokeWidth:1.5,cornerRadius:5};
+export const DEFAULT_APPEARANCE:Appearance={fontFamily:'sans-serif',textColor:'#000000',strokeColor:'#000000',backgroundColor:'#FFFFFF',fillColor:'#FFFFFF',strokeWidth:1.5,cornerRadius:5,fontWeight:400,borderStyle:'solid',nodeAccent:'none',ganttBarStyle:'solid',ganttGrid:'full'};
 export const DEFAULT_STYLE:Style={template:'classic',font_family:'sans-serif',font_size:12,text_color:'#000000',stroke_color:'#000000',background_color:'#FFFFFF',fill_color:'#FFFFFF',stroke_width:1.5,corner_radius:5,transparent_background:false};
 // Demo-facing projection only. The canonical snapshot remains `version`.
 export type Snapshot={version:VersionSnapshot;revision:number;appearance:Appearance;kind:Kind;title:string;fontSize:number;duration:number};
@@ -11,10 +11,10 @@ export function view(version:VersionSnapshot):Snapshot{
  const s=version.style;
  return {version,revision:version.revision,kind:version.spec.diagram_type,title:version.spec.title,fontSize:s.font_size,
  duration:version.layout.diagram_type==='gantt'?Math.max(0,...version.layout.tasks.map(t=>t.end)):0,
- appearance:{fontFamily:s.font_family,textColor:s.text_color,strokeColor:s.stroke_color,backgroundColor:s.background_color,fillColor:s.fill_color,strokeWidth:s.stroke_width,cornerRadius:s.corner_radius}};
+ appearance:{fontFamily:s.font_family,textColor:s.text_color,strokeColor:s.stroke_color,backgroundColor:s.background_color,fillColor:s.fill_color,strokeWidth:s.stroke_width,cornerRadius:s.corner_radius,fontWeight:s.font_weight??400,borderStyle:s.border_style??'solid',nodeAccent:s.node_accent??'none',ganttBarStyle:s.gantt_bar_style??'solid',ganttGrid:s.gantt_grid??'full'}};
 }
 export function withAppearance(snapshot:Snapshot,a:Appearance):Snapshot{
- return view({...snapshot.version,style:{...snapshot.version.style,font_family:a.fontFamily,text_color:a.textColor,stroke_color:a.strokeColor,background_color:a.backgroundColor,fill_color:a.fillColor,stroke_width:a.strokeWidth,corner_radius:a.cornerRadius}});
+ return view({...snapshot.version,style:{...snapshot.version.style,font_family:a.fontFamily,text_color:a.textColor,stroke_color:a.strokeColor,background_color:a.backgroundColor,fill_color:a.fillColor,stroke_width:a.strokeWidth,corner_radius:a.cornerRadius,font_weight:a.fontWeight,border_style:a.borderStyle,node_accent:a.nodeAccent,gantt_bar_style:a.ganttBarStyle,gantt_grid:a.ganttGrid}});
 }
 export type Proposal={baseRevision:number;field:'title'|'fontSize'|'appearance'|'nodeText'|'nodePosition'|'taskText'|'transparent';target?:string;before:string|number;after:string|number;impact:string;template?:string};
 export const SAMPLES:Record<Kind,{title:string;text:string}>={
@@ -44,7 +44,7 @@ export function applyProposal(s:Snapshot,p:Proposal):VersionSnapshot{
  if(p.field==='appearance'){
   if(JSON.stringify(s.appearance)!==p.before)throw new Error('版式已变化。');
   const a=JSON.parse(String(p.after)) as Appearance;
-  if(!FONTS.includes(a.fontFamily)||![a.textColor,a.strokeColor,a.backgroundColor,a.fillColor].every(c=>/^#[0-9a-f]{6}$/i.test(c))||!Number.isFinite(a.strokeWidth)||a.strokeWidth<.5||a.strokeWidth>5||!Number.isFinite(a.cornerRadius)||a.cornerRadius<0||a.cornerRadius>24)throw new Error('版式参数无效。');
+  if(![400,600,700].includes(a.fontWeight)||!['solid','dashed'].includes(a.borderStyle)||!['none','top','left'].includes(a.nodeAccent)||!['solid','outline','hatched'].includes(a.ganttBarStyle)||!['full','rows','banded'].includes(a.ganttGrid)||!FONTS.includes(a.fontFamily)||![a.textColor,a.strokeColor,a.backgroundColor,a.fillColor].every(c=>/^#[0-9a-f]{6}$/i.test(c))||!Number.isFinite(a.strokeWidth)||a.strokeWidth<.5||a.strokeWidth>5||!Number.isFinite(a.cornerRadius)||a.cornerRadius<0||a.cornerRadius>24)throw new Error('版式参数无效。');
   v=withAppearance(view(v),a).version;v.style.template=p.template??'custom';v.origin=p.template?'template':'style';
  }else if(p.field==='fontSize'){v.style.font_size=Number(p.after);v.origin='style';}
  else if(p.field==='transparent'){v.style.transparent_background=p.after==='true';v.origin='style';}

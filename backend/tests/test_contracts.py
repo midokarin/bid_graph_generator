@@ -21,7 +21,7 @@ class ContractTests(unittest.TestCase):
                 original = deepcopy(case["data"])
                 if case["valid"]:
                     result = models[case["model"]].model_validate(case["data"])
-                    self.assertEqual(result.model_dump(mode="json"), original)
+                    self.assertEqual(result.model_dump(mode="json", exclude_unset=True), original)
                 else:
                     with self.assertRaises(ValidationError):
                         models[case["model"]].model_validate(case["data"])
@@ -45,7 +45,7 @@ class ContractTests(unittest.TestCase):
         original = json.loads((CONTRACTS / "examples/flowchart-project.json").read_text())
         result, migrated = migrate_project(original)
         self.assertFalse(migrated)
-        self.assertEqual(result.model_dump(), original)
+        self.assertEqual(result.model_dump(exclude_unset=True), original)
         for version in ["0.8", "2.0", None]:
             with self.assertRaisesRegex(ValueError, "支持 1.0"):
                 migrate_project({**original, "project_file_version": version})
@@ -55,3 +55,18 @@ class ContractTests(unittest.TestCase):
             with self.assertRaises(ValidationError):
                 GenerationRequest(diagram_type="flowchart", source_text=text)
         self.assertEqual(GenerationRequest(diagram_type="flowchart", source_text="x" * MAX_SOURCE).direction, "DOWN")
+
+    def test_optional_presentation_defaults_and_strict_choices(self):
+        from app.domain.contracts import ProjectFile
+        original = json.loads((CONTRACTS / "examples/flowchart-project.json").read_text())
+        project = ProjectFile.model_validate(original)
+        style = project.versions[0].style
+        self.assertEqual((style.font_weight, style.border_style, style.node_accent,
+                          style.gantt_bar_style, style.gantt_grid),
+                         (400, "solid", "none", "solid", "full"))
+        for field, value in [("font_weight", 900), ("border_style", "bad"),
+                             ("node_accent", "bad"), ("gantt_bar_style", "bad"), ("gantt_grid", "bad")]:
+            invalid = deepcopy(original)
+            invalid["versions"][0]["style"][field] = value
+            with self.assertRaises(ValidationError):
+                ProjectFile.model_validate(invalid)

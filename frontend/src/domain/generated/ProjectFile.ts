@@ -262,6 +262,11 @@ export type BackgroundColor = string;
 export type TransparentBackground = boolean;
 export type StrokeWidth = number;
 export type CornerRadius = number;
+export type FontWeight = 400 | 600 | 700;
+export type BorderStyle = "solid" | "dashed";
+export type NodeAccent = "none" | "top" | "left";
+export type GanttBarStyle = "solid" | "outline" | "hatched";
+export type GanttGrid = "full" | "rows" | "banded";
 export type TargetType = "node" | "edge" | "task" | "dependency";
 export type TargetId = string;
 export type Reason = string;
@@ -380,6 +385,11 @@ export interface Style {
   transparent_background: TransparentBackground;
   stroke_width: StrokeWidth;
   corner_radius: CornerRadius;
+  font_weight?: FontWeight;
+  border_style?: BorderStyle;
+  node_accent?: NodeAccent;
+  gantt_bar_style?: GanttBarStyle;
+  gantt_grid?: GanttGrid;
 }
 export interface Supplement {
   target_type: TargetType;
