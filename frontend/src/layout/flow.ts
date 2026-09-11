@@ -2,6 +2,9 @@ import type { ElkNode } from 'elkjs/lib/elk-api';
 import type { FlowchartSpec, FlowLayout } from '../domain/generated/ProjectFile';
 import {orderedBranches} from './branch-order';
 export const TEXT_LIMITS = { flow: 60, task: 60, line: 12, lines: 5, horizontalLine: 8, horizontalLines: 8 } as const;
+// Keep separate return paths legible even when they join the same node.
+// Layered routing has distinct controls within layers and between layers.
+export const FLOW_SPACING = {edge:36,node:36,label:12} as const;
 export function wrapText(text:string, lineLength:number=TEXT_LIMITS.line){
   const lines:string[]=[];
   for(const paragraph of text.split(/\r?\n/u)){
@@ -27,6 +30,11 @@ export function flowGraph(spec: FlowchartSpec): ElkNode {
   const graph:ElkNode={id:'root', layoutOptions:{'elk.algorithm':'layered','elk.direction':spec.direction,
     'elk.edgeRouting':'ORTHOGONAL','elk.padding':'[top=35,left=35,bottom=35,right=35]',
     'elk.layered.spacing.nodeNodeBetweenLayers':'65','elk.spacing.nodeNode':'55',
+    'elk.spacing.edgeEdge':String(FLOW_SPACING.edge),
+    'elk.layered.spacing.edgeEdgeBetweenLayers':String(FLOW_SPACING.edge),
+    'elk.spacing.edgeNode':String(FLOW_SPACING.node),
+    'elk.layered.spacing.edgeNodeBetweenLayers':String(FLOW_SPACING.node),
+    'elk.spacing.edgeLabel':String(FLOW_SPACING.label),
     'elk.layered.considerModelOrder.strategy':'NODES_AND_EDGES'},
     children:spec.nodes.map(n=>({id:n.id,...nodeSize(n,spec.direction)})),
     edges:spec.edges.map(e=>({id:e.id,sources:[e.source],targets:[e.target],

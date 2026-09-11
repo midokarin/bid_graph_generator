@@ -37,3 +37,34 @@ test('cancellation stops candidate search before dispatching another layout',asy
  await assert.rejects(optimizedFlowLayout(sample(),async g=>{calls++;const result=await elk.layout(g);controller.abort();return result},controller.signal),{name:'AbortError'});
  assert.equal(calls,1);
 });
+
+for(const direction of ['DOWN','RIGHT'] as const)test(`${direction}: parallel return lines and terminal bends have breathing room`,async()=>{
+ const spec={...sample(),direction},elk=new ELK();
+ const legacy=await optimizedFlowLayout(spec,g=>{
+  // Previous release used ELK's default edge/edge, edge/node and label gaps.
+  for(const key of Object.keys(g.layoutOptions!))if(/spacing\.(edgeEdge|edgeNode|edgeLabel)/.test(key))delete g.layoutOptions![key];
+  return elk.layout(g);
+ });
+ const updated=await optimizedFlowLayout(spec,g=>elk.layout(g));
+ const returns=spec.edges.filter(e=>e.target==='repair'&&e.kind==='rework');
+ assert.equal(returns.length,2);
+ const gap=(layout:typeof updated)=>{
+  const paths=returns.map(e=>layout.edges.find(a=>a.id===e.id)!.points);
+  const axis=direction==='DOWN'?'y':'x',cross=direction==='DOWN'?'x':'y';
+  let distance=Infinity;
+  for(let i=1;i<paths[0].length;i++)for(let j=1;j<paths[1].length;j++){
+   const a=paths[0][i-1],b=paths[0][i],c=paths[1][j-1],d=paths[1][j];
+   if(a[cross]!==b[cross]||c[cross]!==d[cross])continue;
+   const overlap=Math.min(Math.max(a[axis],b[axis]),Math.max(c[axis],d[axis]))-Math.max(Math.min(a[axis],b[axis]),Math.min(c[axis],d[axis]));
+   if(overlap>=100)distance=Math.min(distance,Math.abs(a[cross]-c[cross]));
+  }
+  return distance;
+ };
+ assert.ok(Number.isFinite(gap(updated)));
+ assert.ok(gap(legacy)<12);assert.ok(gap(updated)>=36);
+ for(const edge of returns){const points=updated.edges.find(e=>e.id===edge.id)!.points,a=points.at(-1)!,b=points.at(-2)!;
+  assert.ok(Math.abs(a.x-b.x)+Math.abs(a.y-b.y)>=36,'arrow has a straight approach before the last bend');
+ }
+ assert.deepEqual(flowQuality(spec,updated).slice(0,4),[0,0,0,0]);
+ assert.ok(updated.width*updated.height<legacy.width*legacy.height*1.15,'spacing does not need a disproportionate canvas');
+});
