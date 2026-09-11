@@ -299,6 +299,13 @@ class GenerationRequest(StrictModel):
     source_text: Annotated[str, Field(min_length=1, max_length=MAX_SOURCE, pattern=r"\S")]
     direction: Direction = "DOWN"
     additional_requirements: Annotated[str, Field(max_length=MAX_SOURCE)] = ""
+    flow_variant: Literal["default", "mainline", "branches", "stages"] = "default"
+
+    @model_validator(mode="after")
+    def variant_kind(self):
+        if self.diagram_type != "flowchart" and self.flow_variant != "default":
+            raise ValueError("flow_variant is only available for flowcharts")
+        return self
 
 
 RESULT_MODELS = {"flowchart": FlowchartResult, "gantt": GanttResult}

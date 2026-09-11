@@ -74,6 +74,27 @@ async def create(client, kind="flowchart", direction="DOWN"):
 
 
 class APITests(unittest.IsolatedAsyncioTestCase):
+    async def test_global_concurrency_queue_cancel_and_slot_release(self):
+        provider = ScriptedProvider([fixture("flowchart")], block=True)
+        async with api(provider) as (client, app):
+            jobs = [await create(client) for _ in range(4)]
+            async with asyncio.timeout(1):
+                while len(provider.calls) < 2:
+                    await asyncio.sleep(0)
+            self.assertEqual(len(provider.calls), 2)
+            self.assertEqual(app.state.generations.jobs[jobs[2]["job_id"]].state, "queued")
+            await client.delete(f"/api/v1/generations/{jobs[2]['job_id']}")
+            await client.delete(f"/api/v1/generations/{jobs[0]['job_id']}")
+            async with asyncio.timeout(1):
+                while len(provider.calls) < 3:
+                    await asyncio.sleep(0)
+            self.assertEqual(app.state.generations.jobs[jobs[3]["job_id"]].state, "generating")
+            provider.release.set()
+            responses = await asyncio.gather(*(client.get(job["events_url"]) for job in jobs))
+            states = [parse_events(response)[-1]["data"]["state"] for response in responses]
+            self.assertEqual(states, ["cancelled", "completed", "cancelled", "completed"])
+            self.assertFalse(any(e["event"] == "result" for e in parse_events(responses[2])))
+
     async def test_concurrent_jobs_start_together_and_cancellation_is_isolated(self):
         provider = ScriptedProvider([fixture("flowchart")], block=True)
         async with api(provider) as (client, app):

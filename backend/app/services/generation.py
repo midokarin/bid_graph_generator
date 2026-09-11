@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from app.domain.contracts import GenerationRequest, RESULT_MODELS, GanttSpec
 from app.domain.scheduling import schedule
-from app.domain.limits import MAX_JOBS, JOB_TTL_SECONDS, MAX_OUTPUT, MAX_REPAIRS
+from app.domain.limits import MAX_JOBS, JOB_TTL_SECONDS, MAX_OUTPUT, MAX_REPAIRS, MAX_CONCURRENT_GENERATIONS
 from app.providers.base import Provider, ProviderError
 from .parsing import parse_result
 from .prompts import initial_messages, repair_messages
@@ -39,6 +39,7 @@ class GenerationService:
     def __init__(self, provider: Provider, log, timeout):
         self.provider, self.log, self.timeout = provider, log, timeout
         self.jobs: dict[str, Job] = {}
+        self.slots = asyncio.Semaphore(MAX_CONCURRENT_GENERATIONS)
 
     def create(self, request: GenerationRequest):
         now = monotonic()
@@ -71,6 +72,14 @@ class GenerationService:
         return job
 
     async def run(self, job, request):
+        try:
+            async with self.slots:
+                if job.state != "cancelled":
+                    await self.run_generation(job, request)
+        except asyncio.CancelledError:
+            self.cancel(job)
+
+    async def run_generation(self, job, request):
         attempt = 0
         try:
             model = RESULT_MODELS[request.diagram_type]

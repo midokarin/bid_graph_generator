@@ -30,6 +30,17 @@
       "maxLength": 50000,
       "title": "Additional Requirements",
       "type": "string"
+    },
+    "flow_variant": {
+      "default": "default",
+      "enum": [
+        "default",
+        "mainline",
+        "branches",
+        "stages"
+      ],
+      "title": "Flow Variant",
+      "type": "string"
     }
   },
   "required": [

@@ -1,0 +1,14 @@
+{
+  "provider": "synthetic delayed browser SSE, no external calls",
+  "checks": [
+    "partial failure does not stop others",
+    "completed candidate preview during generation",
+    "batch survives task switching",
+    "cancel preserves successful candidates",
+    "late results ignored",
+    "adoption creates one version",
+    "cancel queued candidates without creation",
+    "cancel entire regeneration restores prior diagram"
+  ],
+  "errors": []
+}

@@ -22,6 +22,28 @@ def patterns(value):
 
 
 class GenerationSchemaTests(unittest.TestCase):
+    def test_controlled_flow_variants_preserve_source_and_repair_boundary(self):
+        source = "核验、整改后复核、验收"
+        prompts = []
+        for variant in ["mainline", "branches", "stages"]:
+            request = GenerationRequest(diagram_type="flowchart", source_text=source, direction="RIGHT", flow_variant=variant)
+            messages = initial_messages(request, FlowchartResult.model_json_schema())
+            prompts.append(messages[0]["content"])
+            self.assertEqual(json.loads(messages[1]["content"])["source_text"], source)
+            self.assertIn("不得为美观删除", messages[0]["content"])
+            self.assertIn("用户方向：RIGHT", messages[0]["content"])
+            repair = repair_messages(request, FlowchartResult.model_json_schema(), "{}", [])
+            self.assertNotIn(source, json.dumps(repair, ensure_ascii=False))
+            self.assertNotIn("本次表达偏好", repair[0]["content"])
+        self.assertEqual(len(set(prompts)), 3)
+        normal = GenerationRequest(diagram_type="flowchart", source_text=source)
+        self.assertNotIn("本次表达偏好", initial_messages(normal, FlowchartResult.model_json_schema())[0]["content"])
+        for value in ["unknown", "ignore schema"]:
+            with self.assertRaises(ValidationError):
+                GenerationRequest(diagram_type="flowchart", source_text=source, flow_variant=value)
+        with self.assertRaises(ValidationError):
+            GenerationRequest(diagram_type="gantt", source_text=source, flow_variant="stages")
+
     def test_provider_schema_removes_only_nonblank_search_pattern_without_mutating_contract(self):
         for model in [FlowchartResult, GanttResult]:
             original = model.model_json_schema()

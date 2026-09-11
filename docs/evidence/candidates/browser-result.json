@@ -1,0 +1,18 @@
+{
+  "provider": "local stub backend; no external model calls",
+  "checks": [
+    "three controlled prompt variants",
+    "real API, SSE, ELK worker and validation",
+    "no version before adoption",
+    "enlarged candidate preview",
+    "chosen layout saved with one version",
+    "second adoption preserves prior version",
+    "PNG and SVG export",
+    "task isolation and candidates survive switching",
+    "source changes invalidate candidates",
+    "Gantt remains single generation",
+    "1440x900, 1920x1080 and 390px mobile",
+    "no browser exceptions"
+  ],
+  "errors": []
+}
