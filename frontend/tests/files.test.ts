@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {parseProject,writeProject,type ProjectHandle} from '../src/project/files';
 import {useWorkspace} from '../src/store';
-import {svgText,dimensions,DEFAULT_EXPORT} from '../src/project/export';
+import {svgText,dimensions,DEFAULT_EXPORT,readExport} from '../src/project/export';
 import {view} from '../src/model';
 const original=readFileSync(new URL('../../packages/contracts/examples/flowchart-project.json',import.meta.url),'utf8');
 test('explicit migration preserves layouts and rejects unknown/future data',()=>{
@@ -23,10 +23,10 @@ test('write only succeeds after close; failure and cancelled picker retain dirty
  handle.createWritable=async()=>({async write(text:string){written=text},async close(){closed=true},async abort(){}});
  const saved=await writeProject(project,handle);assert.equal(saved.confirmed,true);assert.equal(saved.handle,handle);assert.equal(closed,true);assert.deepEqual(JSON.parse(written),project);
 });
-test('paper SVG shares diagram geometry, omits source/metadata and supports all export options',async()=>{
+test('full-image SVG shares diagram geometry, omits source/metadata and supports all export options',async()=>{
  const project=parseProject(original).project,snapshot=view(project.versions[0]);
- for(const paper of ['A4','A3'] as const)for(const orientation of ['portrait','landscape'] as const)for(const includeTitle of [false,true])for(const background of ['white','transparent','custom'] as const){
-  const options={...DEFAULT_EXPORT,paper,orientation,includeTitle,background,color:'#abc123'},svg=await svgText(snapshot,options),d=dimensions(snapshot,options);
+ for(const includeTitle of [false,true])for(const background of ['white','transparent','custom'] as const){
+  const options={...DEFAULT_EXPORT,includeTitle,background,color:'#abc123'},svg=await svgText(snapshot,options),d=dimensions(snapshot,options);
   assert.ok(svg.includes(`width="${d.width}"`));assert.ok(!svg.includes('source_text'));assert.ok(!svg.includes('metadata'));assert.ok(!svg.includes('foreignObject'));
   assert.equal(svg.includes('font-weight="600"'),includeTitle);
   if(background==='custom')assert.ok(svg.includes('fill="#abc123"'));
@@ -35,4 +35,15 @@ test('paper SVG shares diagram geometry, omits source/metadata and supports all 
 });
 test('switching kinds preserves selected revision and unsaved status',()=>{
  const p=parseProject(readFileSync(new URL('../../packages/contracts/examples/gantt-project.json',import.meta.url),'utf8')).project,state=useWorkspace.getState();state.load(p,false);state.append({...p.versions[0],origin:'restore'});const newest=useWorkspace.getState().activeRevision;state.select(p.current_revision);state.activate('flowchart');state.activate('gantt');assert.equal(useWorkspace.getState().activeRevision,p.current_revision);assert.equal(useWorkspace.getState().dirty,true);assert.ok(newest!>p.current_revision);state.markSaved();state.select(p.current_revision);assert.equal(useWorkspace.getState().dirty,false);
+});
+
+test('exports keep native aspect ratio without paper padding and ignore legacy paper settings',()=>{
+ const snapshot=view(parseProject(original).project.versions[0]);
+ for(const [width,height] of [[1800,400],[400,1800],[900,6000]]){
+  const s={...snapshot,version:{...snapshot.version,layout:{...snapshot.version.layout,width,height}}};
+  const options={...DEFAULT_EXPORT,includeTitle:false};
+  const size=dimensions(s,options);
+  assert.equal(size.width,width*3);assert.equal(size.height,height*3);assert.equal(size.title,0);
+  assert.deepEqual(readExport({...options,paper:'A3',orientation:'landscape'}),options);
+ }
 });
