@@ -22,6 +22,7 @@ class Job:
     changed: asyncio.Event = field(default_factory=asyncio.Event)
     task: asyncio.Task | None = None
     finished_at: float | None = None
+    created_at: float = field(default_factory=monotonic)
 
     def emit(self, event, data):
         if self.state == "cancelled":
@@ -55,11 +56,12 @@ class GenerationService:
     def status(self, job, state, attempt):
         if job.state in TERMINAL:
             return
-        job.emit("status", {"state": state, "attempt": attempt})
+        elapsed_ms = round((monotonic() - job.created_at) * 1000, 3)
+        job.emit("status", {"state": state, "attempt": attempt, "elapsed_ms": elapsed_ms})
         job.state = state
         if state in TERMINAL:
             job.finished_at = monotonic()
-        self.log.write(job.id, state, attempt)
+        self.log.write(job.id, state, attempt, elapsed_ms=elapsed_ms)
 
     def cancel(self, job):
         if job.state not in TERMINAL:
@@ -79,24 +81,41 @@ class GenerationService:
                     return
                 self.status(job, "generating" if attempt == 0 else "repairing", attempt)
                 raw = ""
-                async with asyncio.timeout(self.timeout):
-                    async with aclosing(self.provider.stream(messages, schema)) as chunks:
-                        async for chunk in chunks:
-                            if job.state == "cancelled":
-                                return
-                            if not chunk:
-                                continue
-                            if len(raw) + len(chunk) > MAX_OUTPUT:
-                                raise ProviderError("MODEL_OUTPUT_TOO_LARGE")
-                            raw += chunk
-                            job.emit("delta", {"attempt": attempt, "text": chunk})
+                started = monotonic()
+                first_content_ms = None
+                try:
+                    async with asyncio.timeout(self.timeout):
+                        async with aclosing(self.provider.stream(messages, schema)) as chunks:
+                            async for chunk in chunks:
+                                if job.state == "cancelled":
+                                    return
+                                if not chunk:
+                                    continue
+                                if first_content_ms is None:
+                                    first_content_ms = round((monotonic() - started) * 1000, 3)
+                                if len(raw) + len(chunk) > MAX_OUTPUT:
+                                    raise ProviderError("MODEL_OUTPUT_TOO_LARGE")
+                                raw += chunk
+                                job.emit("delta", {"attempt": attempt, "text": chunk})
+                finally:
+                    # Keep useful timing even when the upstream times out or is cancelled.
+                    provider_ms = round((monotonic() - started) * 1000, 3)
+                    self.log.write(job.id, "provider_timing", attempt, provider_ms=provider_ms,
+                                   first_content_ms=first_content_ms, output_chars=len(raw))
                 if job.state == "cancelled":
                     return
                 self.status(job, "validating", attempt)
+                started = monotonic()
                 result, errors = parse_result(raw, model, request.direction)
+                validation_ms = round((monotonic() - started) * 1000, 3)
+                self.log.write(job.id, "validation_timing", attempt, validation_ms=validation_ms)
                 if result is not None:
                     if isinstance(result.spec, GanttSpec):
-                        job.emit("schedule", {"tasks": [task.model_dump(mode="json") for task in schedule(result.spec)]})
+                        started = monotonic()
+                        tasks = [task.model_dump(mode="json") for task in schedule(result.spec)]
+                        self.log.write(job.id, "schedule_timing", attempt,
+                                       schedule_ms=round((monotonic() - started) * 1000, 3))
+                        job.emit("schedule", {"tasks": tasks})
                     job.emit("result", result.model_dump(mode="json"))
                     self.status(job, "completed", attempt)
                     return

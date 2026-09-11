@@ -190,3 +190,23 @@ class APITests(unittest.IsolatedAsyncioTestCase):
                 job = await create(client, kind)
                 events = parse_events(await client.get(job["events_url"]))
                 self.assertEqual(events[-1]["data"]["state"], "completed")
+
+    async def test_timing_covers_each_repair_without_changing_results_or_logging_text(self):
+        provider = ScriptedProvider(["{}", fixture("gantt")])
+        async with api(provider) as (client, app):
+            job = await create(client, "gantt")
+            events = parse_events(await client.get(job["events_url"]))
+            result = next(e["data"] for e in events if e["event"] == "result")
+            self.assertEqual(result, json.loads(fixture("gantt")))
+            elapsed = [e["data"]["elapsed_ms"] for e in events if e["event"] == "status"]
+            self.assertEqual(elapsed, sorted(elapsed))
+            raw_log = app.state.generations.log.path.read_text()
+            self.assertNotIn("ORIGINAL_SOURCE", raw_log)
+            self.assertNotIn('"spec"', raw_log)
+            records = [json.loads(line) for line in raw_log.splitlines()]
+            timings = [r for r in records if r["state"] == "provider_timing"]
+            self.assertEqual([r["attempt"] for r in timings], [0, 1])
+            self.assertEqual(timings[0]["output_chars"], 2)
+            for timing in timings:
+                self.assertLessEqual(timing["first_content_ms"], timing["provider_ms"])
+            self.assertEqual(len([r for r in records if r["state"] == "schedule_timing"]), 1)

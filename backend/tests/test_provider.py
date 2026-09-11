@@ -5,7 +5,7 @@ import unittest
 import httpx
 
 from app.domain.contracts import FlowchartResult
-from app.providers.base import ProviderError
+from app.providers.base import ProviderError, StreamMetrics
 from app.providers.openai import OpenAIProvider
 from app.settings import Settings
 
@@ -127,3 +127,42 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(asyncio.CancelledError):
             await task
         self.assertTrue(stream.closed)
+
+    async def test_remembers_only_explicit_schema_incompatibility_for_this_adapter(self):
+        calls = []
+
+        async def handler(request):
+            payload = json.loads(request.content)
+            calls.append(payload)
+            if "response_format" in payload:
+                return httpx.Response(400, json={"error": {"param": "response_format", "code": "unsupported_parameter"}})
+            return httpx.Response(200, content=b'data: {"choices":[{"delta":{"content":"{}"}}]}\n\ndata: [DONE]\n\n')
+
+        provider = OpenAIProvider(self.settings(), httpx.MockTransport(handler))
+        self.assertEqual(await collect(provider), "{}")
+        self.assertEqual(await collect(provider), "{}")
+        self.assertEqual(["response_format" in call for call in calls], [True, False, False])
+        fresh = OpenAIProvider(self.settings(), httpx.MockTransport(handler))
+        self.assertEqual(await collect(fresh), "{}")
+        self.assertIn("response_format", calls[3])
+
+    async def test_metrics_separate_reasoning_from_final_output_without_recording_text(self):
+        body = ('data: {"choices":[{"delta":{"reasoning_content":"private reasoning"}}]}\n\n'
+                'data: {"choices":[{"delta":{"content":"{}"}}]}\n\n'
+                'data: [DONE]\n\n').encode()
+
+        async def handler(request):
+            return httpx.Response(200, content=body)
+
+        metrics = StreamMetrics()
+        provider = OpenAIProvider(self.settings(), httpx.MockTransport(handler))
+        raw = "".join([part async for part in provider.stream([], {}, metrics=metrics)])
+        self.assertEqual(raw, "{}")
+        self.assertEqual(metrics.requests, 1)
+        self.assertEqual(metrics.reasoning_chars, 17)
+        self.assertEqual(metrics.content_chars, 2)
+        self.assertLessEqual(metrics.first_headers_ms, metrics.first_event_ms)
+        self.assertLessEqual(metrics.first_event_ms, metrics.first_reasoning_ms)
+        self.assertLessEqual(metrics.first_reasoning_ms, metrics.first_content_ms)
+        self.assertLessEqual(metrics.first_content_ms, metrics.elapsed_ms)
+        self.assertNotIn("private reasoning", repr(metrics))

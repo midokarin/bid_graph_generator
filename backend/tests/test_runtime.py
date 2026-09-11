@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -36,3 +37,15 @@ class RuntimeTests(unittest.TestCase):
         for changes in [{"provider": "openai"}, {"provider": "bad"}, {"base_url": "file:///tmp/test"}, {"base_url": "https://user:pass@model.example"}, {"timeout": 0}, {"timeout": float("nan")}, {"structured_output": "bad"}]:
             with self.assertRaises(ValueError):
                 Settings(**changes)
+
+    def test_metrics_log_filters_non_numeric_and_unrecognized_fields(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = DebugLog(directory)
+            log.write("test-job", "provider_timing", 0, provider_ms=350000,
+                      first_content_ms=None, output_chars=5072, source_text="private source",
+                      api_key="private secret", validation_ms="private text")
+            record = json.loads(log.path.read_text())
+            self.assertEqual(record["provider_ms"], 350000)
+            self.assertIsNone(record["first_content_ms"])
+            self.assertNotIn("private", log.path.read_text())
+            log.close()

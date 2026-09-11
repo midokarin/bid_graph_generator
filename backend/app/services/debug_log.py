@@ -27,8 +27,13 @@ class DebugLog:
         self.path.chmod(0o600)
         self.bytes = 0
 
-    def write(self, job_id, state, attempt):
-        line = json.dumps({"job_id": job_id, "state": state, "attempt": attempt}) + "\n"
+    def write(self, job_id, state, attempt, **metrics):
+        # Only numeric performance fields may be appended to diagnostics.
+        allowed = {"elapsed_ms", "first_content_ms", "provider_ms", "validation_ms",
+                   "schedule_ms", "output_chars"}
+        safe = {key: value for key, value in metrics.items()
+                if key in allowed and (value is None or type(value) in {int, float})}
+        line = json.dumps({"job_id": job_id, "state": state, "attempt": attempt, **safe}, allow_nan=False) + "\n"
         if self.bytes + len(line.encode()) <= MAX_LOG_BYTES:
             self.file.write(line)
             self.file.flush()

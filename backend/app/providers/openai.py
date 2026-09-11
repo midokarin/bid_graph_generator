@@ -1,10 +1,11 @@
 import json
+from time import monotonic
 
 import httpx
 
 from app.domain.limits import MAX_OUTPUT
 from app.settings import Settings
-from .base import ProviderError
+from .base import ProviderError, StreamMetrics
 from .schema import native_schema
 
 
@@ -12,11 +13,15 @@ class OpenAIProvider:
     def __init__(self, settings: Settings, transport=None):
         self.settings = settings
         self.transport = transport
+        self._schema_unsupported = False
 
-    async def stream(self, messages, schema):
+    async def stream(self, messages, schema, *, metrics: StreamMetrics | None = None):
+        metrics = metrics if metrics is not None else StreamMetrics()
+        started = monotonic()
+        elapsed = lambda: round((monotonic() - started) * 1000, 3)
         settings = self.settings
         payload = {"model": settings.model, "messages": messages, "stream": True}
-        if settings.structured_output != "off":
+        if settings.structured_output != "off" and not self._schema_unsupported:
             payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {"name": "diagram_result", "strict": True, "schema": native_schema(schema)},
@@ -24,10 +29,13 @@ class OpenAIProvider:
         try:
             async with httpx.AsyncClient(timeout=settings.timeout, transport=self.transport) as client:
                 for attempt in range(2):
+                    metrics.requests += 1
                     async with client.stream(
                         "POST", settings.base_url.rstrip("/") + "/chat/completions",
                         headers={"Authorization": f"Bearer {settings.api_key}"}, json=payload,
                     ) as response:
+                        if metrics.first_headers_ms is None:
+                            metrics.first_headers_ms = elapsed()
                         if response.is_error:
                             # Only retry an explicit unsupported structured-output parameter.
                             # Authentication, rate-limit and other schema errors must not be hidden.
@@ -47,6 +55,9 @@ class OpenAIProvider:
                             if (attempt == 0 and settings.structured_output == "auto"
                                     and response.status_code in {400, 422} and unsupported):
                                 payload.pop("response_format", None)
+                                # This adapter belongs to one immutable settings instance.
+                                # A settings change creates a new adapter and probes again.
+                                self._schema_unsupported = True
                                 continue
                             raise ProviderError(f"PROVIDER_HTTP_{response.status_code}")
                         data_lines = []
@@ -67,6 +78,8 @@ class OpenAIProvider:
                                     return
                                 try:
                                     event = json.loads(data)
+                                    if metrics.first_event_ms is None:
+                                        metrics.first_event_ms = elapsed()
                                     if "error" in event:
                                         raise ProviderError("PROVIDER_STREAM_ERROR")
                                     choices = event.get("choices", [])
@@ -76,12 +89,21 @@ class OpenAIProvider:
                                     if choice.get("finish_reason") in {"length", "content_filter"}:
                                         raise ProviderError("PROVIDER_INCOMPLETE_RESPONSE")
                                     delta = choice.get("delta", {})
+                                    reasoning = delta.get("reasoning_content")
+                                    if isinstance(reasoning, str) and reasoning:
+                                        if metrics.first_reasoning_ms is None:
+                                            metrics.first_reasoning_ms = elapsed()
+                                        metrics.reasoning_chars += len(reasoning)
                                     if delta.get("refusal") or delta.get("tool_calls"):
                                         raise ProviderError("PROVIDER_UNEXPECTED_OUTPUT")
                                     content = delta.get("content")
                                     if content is not None:
                                         if not isinstance(content, str):
                                             raise ProviderError("PROVIDER_INVALID_CONTENT")
+                                        if content:
+                                            if metrics.first_content_ms is None:
+                                                metrics.first_content_ms = elapsed()
+                                            metrics.content_chars += len(content)
                                         yield content
                                 except (ValueError, TypeError, AttributeError, IndexError) as exc:
                                     raise ProviderError("PROVIDER_INVALID_SSE") from exc
@@ -90,3 +112,5 @@ class OpenAIProvider:
             raise ProviderError("PROVIDER_TIMEOUT") from exc
         except httpx.HTTPError as exc:
             raise ProviderError("PROVIDER_CONNECTION_ERROR") from exc
+        finally:
+            metrics.elapsed_ms = elapsed()
