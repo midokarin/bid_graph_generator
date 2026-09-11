@@ -1,0 +1,172 @@
+
+> bid-graph-generator@0.1.0 quality
+> python3 scripts/manage.py quality
+
+Pydantic JSON schemas: OK
+Generated TypeScript contracts: OK
+/Users/wyx/编程/biaoshu2/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_concurrent_jobs_start_together_and_cancellation_is_isolated (test_api.APITests.test_concurrent_jobs_start_together_and_cancellation_is_isolated) ... ok
+test_default_stub_both_kinds (test_api.APITests.test_default_stub_both_kinds) ... ok
+test_direction_is_authoritative_and_fence_accepted (test_api.APITests.test_direction_is_authoritative_and_fence_accepted) ... ok
+test_exact_repair_limit_and_cycle_repair (test_api.APITests.test_exact_repair_limit_and_cycle_repair) ... ok
+test_output_limit_timeout_and_api_errors (test_api.APITests.test_output_limit_timeout_and_api_errors) ... ok
+test_sequential_gantt_keeps_all_tasks_and_finish_milestone (test_api.APITests.test_sequential_gantt_keeps_all_tasks_and_finish_milestone) ... ok
+test_sse_success_repair_and_cancel (test_api.APITests.test_sse_success_repair_and_cancel) ... ok
+test_timing_covers_each_repair_without_changing_results_or_logging_text (test_api.APITests.test_timing_covers_each_repair_without_changing_results_or_logging_text) ... ok
+test_ambiguous_or_invalid_dates_are_not_guessed (test_calendar_reference.CalendarReferenceTests.test_ambiguous_or_invalid_dates_are_not_guessed) ... ok
+test_cross_month_leap_day_and_explicit_cross_year (test_calendar_reference.CalendarReferenceTests.test_cross_month_leap_day_and_explicit_cross_year) ... ok
+test_hints_preserve_source_and_stay_out_of_flow_and_repair (test_calendar_reference.CalendarReferenceTests.test_hints_preserve_source_and_stay_out_of_flow_and_repair) ... ok
+test_input_bounds_and_no_coercion (test_contracts.ContractTests.test_input_bounds_and_no_coercion) ... ok
+test_limited_cleanup_and_no_execution (test_contracts.ContractTests.test_limited_cleanup_and_no_execution) ... ok
+test_migration_boundary (test_contracts.ContractTests.test_migration_boundary) ... ok
+test_optional_presentation_defaults_and_strict_choices (test_contracts.ContractTests.test_optional_presentation_defaults_and_strict_choices) ... ok
+test_shared_corpus (test_contracts.ContractTests.test_shared_corpus) ... ok
+test_initial_and_repair_prompts_use_the_same_generation_schema (test_generation_schema.GenerationSchemaTests.test_initial_and_repair_prompts_use_the_same_generation_schema) ... ok
+test_provider_schema_removes_only_nonblank_search_pattern_without_mutating_contract (test_generation_schema.GenerationSchemaTests.test_provider_schema_removes_only_nonblank_search_pattern_without_mutating_contract) ... ok
+test_search_vs_fullmatch_regression_and_local_nonblank_validation (test_generation_schema.GenerationSchemaTests.test_search_vs_fullmatch_regression_and_local_nonblank_validation) ... ok
+test_cancellation_closes_upstream_response (test_provider.ProviderTests.test_cancellation_closes_upstream_response) ... ok
+test_fallback_only_for_explicit_unsupported_schema (test_provider.ProviderTests.test_fallback_only_for_explicit_unsupported_schema) ... ok
+test_invalid_truncated_and_filtered_sse (test_provider.ProviderTests.test_invalid_truncated_and_filtered_sse) ... ok
+test_metrics_separate_reasoning_from_final_output_without_recording_text (test_provider.ProviderTests.test_metrics_separate_reasoning_from_final_output_without_recording_text) ... ok
+test_native_schema_chunked_sse_and_cleanup (test_provider.ProviderTests.test_native_schema_chunked_sse_and_cleanup) ... ok
+test_off_required_and_safe_errors (test_provider.ProviderTests.test_off_required_and_safe_errors) ... ok
+test_remembers_only_explicit_schema_incompatibility_for_this_adapter (test_provider.ProviderTests.test_remembers_only_explicit_schema_incompatibility_for_this_adapter) ... ok
+test_configuration_is_explicit_and_key_repr_hidden (test_runtime.RuntimeTests.test_configuration_is_explicit_and_key_repr_hidden) ... ok
+test_metrics_log_filters_non_numeric_and_unrecognized_fields (test_runtime.RuntimeTests.test_metrics_log_filters_non_numeric_and_unrecognized_fields) ... ok
+test_temp_log_is_bounded_and_cleanup_preserves_live_runs (test_runtime.RuntimeTests.test_temp_log_is_bounded_and_cleanup_preserves_live_runs) ... ok
+test_earliest_fractional_and_cycle (test_scheduling.SchedulingTests.test_earliest_fractional_and_cycle) ... ok
+test_units_parallel_lead_lag_milestones_and_determinism (test_scheduling.SchedulingTests.test_units_parallel_lead_lag_milestones_and_determinism) ... ok
+test_explicit_migration_and_future_rejection (test_settings.SettingsAndFilesTests.test_explicit_migration_and_future_rejection) ... ok
+test_launch_timeout_overrides_saved_legacy_budget_without_rewriting_config (test_settings.SettingsAndFilesTests.test_launch_timeout_overrides_saved_legacy_budget_without_rewriting_config) ... ok
+test_platform_paths_and_atomic_config (test_settings.SettingsAndFilesTests.test_platform_paths_and_atomic_config) ... ok
+test_settings_api_masks_key_and_rejects_external_origin (test_settings.SettingsAndFilesTests.test_settings_api_masks_key_and_rejects_external_origin) ... ok
+
+----------------------------------------------------------------------
+Ran 35 tests in 1.609s
+
+OK
+
+> @bid-graph/frontend@0.1.0 test
+> node --import tsx --test tests/*.test.ts
+
+✔ repeated DOWN/RIGHT drags preserve ports, stop elbow/label accumulation and keep unrelated edges intact (29.96875ms)
+✔ a straight flow connection can move sideways, reverse order and return without accumulating bends (0.612959ms)
+✔ screenshot regression: every gantt arrow points right, clears bars/milestones, and remains inside the canvas (3.074917ms)
+✔ gantt negative/positive lag and same-time milestones keep right-facing arrows (0.608292ms)
+✔ shared contract: flowchart-valid (2.43725ms)
+✔ shared contract: flowchart-spec-valid (0.766333ms)
+✔ shared contract: flowchart-missing (0.542083ms)
+✔ shared contract: flowchart-unknown (0.105209ms)
+✔ shared contract: flowchart-wrong-type (0.137959ms)
+✔ shared contract: flowchart-supplement-ref (0.257083ms)
+✔ shared contract: flowchart-project-valid (2.929708ms)
+✔ shared contract: flowchart-project-future (1.106959ms)
+✔ shared contract: flowchart-project-current (0.356458ms)
+✔ shared contract: flowchart-project-unknown-style (0.392584ms)
+✔ shared contract: flowchart-project-date (0.183083ms)
+✔ shared contract: flowchart-project-color (0.764792ms)
+✔ shared contract: flowchart-project-revision (0.699292ms)
+✔ shared contract: flowchart-project-kind (0.13475ms)
+✔ shared contract: flowchart-empty-title (0.078416ms)
+✔ shared contract: gantt-valid (0.782916ms)
+✔ shared contract: gantt-spec-valid (0.452083ms)
+✔ shared contract: gantt-missing (0.417083ms)
+✔ shared contract: gantt-unknown (0.072542ms)
+✔ shared contract: gantt-wrong-type (0.055667ms)
+✔ shared contract: gantt-supplement-ref (0.195625ms)
+✔ shared contract: gantt-project-valid (0.146375ms)
+✔ shared contract: gantt-project-future (1.2665ms)
+✔ shared contract: gantt-project-current (0.109ms)
+✔ shared contract: gantt-project-unknown-style (0.111375ms)
+✔ shared contract: gantt-project-date (0.083125ms)
+✔ shared contract: gantt-project-color (0.083458ms)
+✔ shared contract: gantt-project-revision (0.121583ms)
+✔ shared contract: gantt-project-kind (0.067958ms)
+✔ shared contract: gantt-empty-title (0.071708ms)
+✔ shared contract: flow-dangling (0.089ms)
+✔ shared contract: flow-duplicate-node (0.064375ms)
+✔ shared contract: flow-duplicate-edge (0.051792ms)
+✔ shared contract: flow-enum (0.056084ms)
+✔ shared contract: flow-coercion (0.051ms)
+✔ shared contract: flow-bool-number (0.049125ms)
+✔ shared contract: flow-level-negative (0.0485ms)
+✔ shared contract: flow-too-many (0.082625ms)
+✔ shared contract: flow-label-too-long (0.049542ms)
+✔ shared contract: gantt-unit-week (0.061917ms)
+✔ shared contract: gantt-unit-month (0.090792ms)
+✔ shared contract: gantt-dangling (0.1065ms)
+✔ shared contract: gantt-cycle (0.061666ms)
+✔ shared contract: gantt-self-cycle (0.067083ms)
+✔ shared contract: gantt-duplicate-task (0.056791ms)
+✔ shared contract: gantt-duplicate-dependency (0.045959ms)
+✔ shared contract: gantt-negative-duration (0.048833ms)
+✔ shared contract: gantt-bool-duration (0.047208ms)
+✔ shared contract: gantt-milestone-duration (0.055167ms)
+✔ shared contract: gantt-task-zero (0.043125ms)
+✔ shared contract: gantt-coercion (0.043458ms)
+✔ shared contract: gantt-unit (0.046833ms)
+✔ shared contract: flow-geometry-coverage (0.13475ms)
+✔ shared contract: flow-geometry-direction (0.104708ms)
+✔ shared contract: flow-geometry-range (0.122458ms)
+✔ shared contract: flow-geometry-canvas (0.10025ms)
+✔ shared contract: gantt-schedule-range (0.083167ms)
+✔ shared contract: gantt-schedule-coverage (0.063292ms)
+✔ shared contract: flow-json-integer-number (0.0515ms)
+✔ shared contract: flow-fractional-level (0.04725ms)
+✔ shared contract: project-timestamp-2026-09-10T00:00:60Z (0.105084ms)
+✔ shared contract: project-timestamp-2026-09-10T00:00:00+00:60 (0.090125ms)
+✔ shared contract: project-timestamp-0000-09-10T00:00:00Z (0.087292ms)
+✔ runtime validators narrow unknown JSON to generated TypeScript types (4.026958ms)
+✔ explicit migration preserves layouts and rejects unknown/future data (5.228792ms)
+✔ write only succeeds after close; failure and cancelled picker retain dirty state (1.602334ms)
+✔ full-image SVG shares diagram geometry, omits source/metadata and supports all export options (34.035667ms)
+✔ switching kinds preserves selected revision and unsaved status (1.830333ms)
+✔ exports keep native aspect ratio without paper padding and ignore legacy paper settings (0.287291ms)
+✔ default-size Gantt names wrap to fit instead of blocking version creation (17.8495ms)
+✔ Gantt wrapping respects newlines and font changes without changing schedule (1.109958ms)
+✔ Gantt still rejects excessive text or rows that cannot fit at the chosen font (0.342625ms)
+✔ complete Chinese labels survive preview and SVG export without first-character truncation (12.718416ms)
+✔ centered spine, side correction loop, orthogonal edges and diamond attachment (1.026042ms)
+✔ 60-character multiline nodes fit their geometry without losing text (1.675792ms)
+✔ multi-branch graphs keep ELK fallback in both directions (103.526709ms)
+✔ horizontal spine is compact, aligned and separates correction paths (4.05225ms)
+✔ existing wide horizontal snapshots retain twelve-character wrapping (0.114875ms)
+✔ style trials leave stored project and dirty state untouched; applying creates just one complete version (6.630334ms)
+✔ oversized text is flagged during preview and rejected on apply without losing the original (0.565833ms)
+✔ reset adjusts only the exposed controls and preserves imported colors and additional template fields (0.364334ms)
+✔ both chart styles survive project round-trip and reach the shared SVG exporter without moving geometry (31.409167ms)
+✔ same-kind task histories, edits, restore and saved state remain independent (90.466917ms)
+✔ scene templates preserve business data, positions and history through project reopen and SVG export (145.659458ms)
+✔ non-color choices render actual emphasis, dash patterns, hatch bars and table bands (8.550416ms)
+✔ flow JSON → ELK DOWN/RIGHT → SVG; complete snapshots preserve coordinates and bends (116.095667ms)
+✔ gantt JSON → actual Python schedule → SVG across day/week/month, with long canvas (325.407333ms)
+✔ multi-branch layout and readable text bounds (10.96575ms)
+✔ sequential gantt preserves complete labels, 23-day finish and zero-duration milestone in SVG (105.745958ms)
+ℹ tests 93
+ℹ suites 0
+ℹ pass 93
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 940.712166
+
+> @bid-graph/frontend@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @bid-graph/frontend@0.1.0 build
+> vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 1808 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                             0.38 kB │ gzip:   0.30 kB
+dist/assets/elk-worker.min-DGCccKuH.js  1,613.73 kB
+dist/assets/index-Bo7dplFS.css             34.22 kB │ gzip:   8.06 kB
+dist/assets/server.browser-CsxbZb-n.js    166.30 kB │ gzip:  50.50 kB
+dist/assets/index-JNOinQqE.js             448.74 kB │ gzip: 140.19 kB
+✓ built in 1.22s

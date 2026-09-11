@@ -3,16 +3,17 @@ import { Diagram } from './Diagram';
 import type { Snapshot } from './model';
 
 type Props = {
+  taskName?: string;
   history: Snapshot[];
   currentRevision: number | null;
   onSelect: (snapshot: Snapshot) => void;
   onRestore: () => void;
 };
 
-export function VersionHistory({ history, currentRevision, onSelect, onRestore }: Props) {
+export function VersionHistory({ taskName, history, currentRevision, onSelect, onRestore }: Props) {
   return <>
     <h2>版本记录</h2>
-    <p className="muted">点击条目切换查看。完整快照按时间保留。</p>
+    <p className="muted">{taskName&&<><strong>{taskName}</strong> · </>}仅当前任务的版本。点击条目切换查看。</p>
     {history.length === 0
       ? <p className="empty-history">尚未生成图表。</p>
       : <div className="version-list">

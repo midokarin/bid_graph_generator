@@ -1,0 +1,37 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createWorkspace} from '../src/store';
+import ELK from 'elkjs/lib/elk.bundled.js';
+import {flowGraph,readLayout} from '../src/layout/flow';
+import type {ProjectFile} from '../src/domain/generated/ProjectFile';
+
+const project=JSON.parse(readFileSync(new URL('../../packages/contracts/examples/flowchart-project.json',import.meta.url),'utf8')) as ProjectFile;
+test('same-kind task histories, edits, restore and saved state remain independent',async()=>{
+ const spec=project.versions[0].spec;
+ assert.equal(spec.diagram_type,'flowchart');
+ if(spec.diagram_type!=='flowchart')throw new Error('Expected flowchart fixture');
+ project.versions[0].layout=readLayout(spec,await new ELK().layout(flowGraph(spec)));
+ const a=createWorkspace(),b=createWorkspace();
+ let finishA!:()=>void;
+ const pending=new Promise<void>(resolve=>{finishA=()=>{a.getState().append(project.versions[0]);resolve()}});
+ b.getState().append({...project.versions[0],spec:{...project.versions[0].spec,title:'任务 B'}});
+ b.getState().markSaved();
+ finishA();await pending;
+ assert.equal(a.getState().versions.length,1);
+ assert.equal(b.getState().versions.length,1);
+ assert.equal(b.getState().versions[0].spec.title,'任务 B');
+ assert.equal(a.getState().dirty,true);assert.equal(b.getState().dirty,false);
+ a.getState().append({...a.getState().versions[0],origin:'style'});
+ a.getState().select(1);
+ a.getState().append({...a.getState().versions[0],origin:'restore'});
+ assert.equal(a.getState().activeRevision,3);
+ assert.equal(b.getState().activeRevision,1);
+ const before=structuredClone(a.getState().versions);
+ b.getState().load(structuredClone(project),false);
+ assert.deepEqual(a.getState().versions,before);
+ assert.equal(a.getState().dirty,true);
+ b.getState().activate('gantt');b.getState().touch();
+ assert.equal(a.getState().activeKind,'flowchart');
+ assert.equal(a.getState().dirtyKinds.gantt,false);
+});

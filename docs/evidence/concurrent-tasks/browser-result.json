@@ -1,0 +1,25 @@
+{
+  "provider": "synthetic intercepted SSE; no external model calls",
+  "checks": [
+    "three concurrent tasks including same-kind tasks",
+    "out-of-order completion",
+    "cancel with late result",
+    "retry completes in background",
+    "task-specific source, history, restore and save",
+    "style draft survives switching",
+    "mobile navigation",
+    "no duplicate DOM IDs",
+    "no browser exceptions"
+  ],
+  "saved": [
+    {
+      "kind": "gantt",
+      "revisions": 1
+    },
+    {
+      "kind": "flowchart",
+      "revisions": 3
+    }
+  ],
+  "errors": []
+}

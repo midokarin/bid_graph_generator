@@ -1,5 +1,5 @@
 import { CheckCircle2, ChevronDown, ChevronUp, CircleHelp, LoaderCircle, TerminalSquare, XCircle } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 
 export type RunStatus = 'idle' | 'running' | 'success' | 'error' | 'cancelled';
 export type RunSource = '程序' | 'LLM' | '渲染器';
@@ -38,6 +38,7 @@ function JsonOutput({ text }: { text: string }) {
 }
 
 export function RunStream({ status, events, expanded, onExpandedChange, attempts, startedAt }: Props) {
+  const logId = useId();
   const latest = events.at(-1);
   const [now, setNow] = useState(Date.now());
   const followLog = useRef(true);
@@ -56,13 +57,13 @@ export function RunStream({ status, events, expanded, onExpandedChange, attempts
   const elapsed = status === 'running' && startedAt !== null ? `${(Math.max(0, now - startedAt) / 1000).toFixed(1)}s` : latest?.elapsed;
 
   return <section className={`run-stream ${expanded ? 'expanded' : ''} ${status}`} aria-label="运行详情">
-    <button className="run-stream-summary" type="button" aria-expanded={expanded} aria-controls="run-stream-log" onClick={() => onExpandedChange(!expanded)}>
+    <button className="run-stream-summary" type="button" aria-expanded={expanded} aria-controls={logId} onClick={() => onExpandedChange(!expanded)}>
       <span className="run-stream-state"><StatusIcon size={15} className={status === 'running' ? 'spin' : ''}/><strong>{statusCopy[status]}</strong></span>
       <span className="run-stream-latest" aria-live="polite">{latest?.message ?? '生成时将在这里显示程序、LLM 与渲染器的消息'}</span>
       <span className="run-stream-time">{elapsed}</span>
       {expanded ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
     </button>
-    {expanded && <div className="run-stream-body" id="run-stream-log">
+    {expanded && <div className="run-stream-body" id={logId}>
       <div className="run-stream-heading"><span><TerminalSquare size={14}/>实时运行日志</span><span>按实际进度更新 · JSON 可展开查看</span></div>
       <div className="run-stream-events" ref={logRef} role="log" aria-live="polite" aria-relevant="additions" onScroll={event => {
         const element = event.currentTarget;

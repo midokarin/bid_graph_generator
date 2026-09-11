@@ -74,6 +74,27 @@ async def create(client, kind="flowchart", direction="DOWN"):
 
 
 class APITests(unittest.IsolatedAsyncioTestCase):
+    async def test_concurrent_jobs_start_together_and_cancellation_is_isolated(self):
+        provider = ScriptedProvider([fixture("flowchart")], block=True)
+        async with api(provider) as (client, app):
+            first = await create(client)
+            await asyncio.wait_for(provider.started.wait(), 1)
+            second = await create(client)
+            async with asyncio.timeout(1):
+                while len(provider.calls) < 2:
+                    await asyncio.sleep(0)
+            self.assertEqual(app.state.generations.jobs[first["job_id"]].state, "generating")
+            self.assertEqual(app.state.generations.jobs[second["job_id"]].state, "generating")
+            await client.delete(f"/api/v1/generations/{first['job_id']}")
+            provider.release.set()
+            cancelled, completed = await asyncio.gather(
+                client.get(first["events_url"]), client.get(second["events_url"]))
+            cancelled_events, completed_events = parse_events(cancelled), parse_events(completed)
+            self.assertFalse(any(e["event"] == "result" for e in cancelled_events))
+            self.assertEqual(cancelled_events[-1]["data"]["state"], "cancelled")
+            self.assertEqual(completed_events[-1]["data"]["state"], "completed")
+            self.assertEqual(sum(e["event"] == "result" for e in completed_events), 1)
+
     async def test_sequential_gantt_keeps_all_tasks_and_finish_milestone(self):
         # Hand-authored fixture: verifies the service/SSE path, not LLM comprehension.
         provider = ScriptedProvider([fixture("gantt-sequential")])
