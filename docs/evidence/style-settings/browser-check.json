@@ -1,0 +1,23 @@
+{
+  "browser": "153.0.8010.36",
+  "source": "synthetic project fixtures, no model calls",
+  "checks": [
+    "empty state disabled",
+    "removed controls absent",
+    "live font/stroke/radius",
+    "original comparison",
+    "cancel leaves history and dirty unchanged",
+    "save/export/history/layout/kind guarded",
+    "beforeunload guard",
+    "oversized font blocked",
+    "reset to default clears trial",
+    "one version on apply",
+    "shared export rendering",
+    "actual downloaded JSON equals applied versions; upload reopen restores styles",
+    "download fallback retains dirty",
+    "gantt trial and scheduling preserved",
+    "390px no horizontal overflow and quick preview navigation",
+    "all useful sliders visible at 1440px"
+  ],
+  "pageErrors": []
+}
