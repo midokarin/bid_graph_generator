@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const result=JSON.parse(await readFile('packages/contracts/examples/flowchart.json','utf8'));
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:900}});
-const out='docs/evidence/candidates';await mkdir(out,{recursive:true});
+const out=process.env.BIAOSHU_EVIDENCE_DIR??'docs/evidence/candidates';await mkdir(out,{recursive:true});
 const errors=[],jobs=[];page.on('pageerror',e=>errors.push(e.message));
 await page.route('**/api/v1/health',r=>r.fulfill({json:{provider:'stub',status:'ok'}}));
 await page.route('**/api/v1/generations',async r=>{

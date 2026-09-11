@@ -1,0 +1,441 @@
+{
+  "source": "fixed synthetic fixtures; no external model calls",
+  "metrics": [
+    "ordinal_errors",
+    "node_obstructions",
+    "crossings",
+    "line_overlap_length",
+    "label_obstructions",
+    "bends",
+    "line_length",
+    "canvas_area"
+  ],
+  "rows": [
+    {
+      "fixture": "frontend/tests/fixtures/presentation.json",
+      "direction": "DOWN",
+      "baseline": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        847.44,
+        990416
+      ],
+      "distinct_layouts": 3,
+      "profiles": [
+        {
+          "profile": "mainline",
+          "elapsed_ms": 233,
+          "size": [
+            1036,
+            956
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            847.44,
+            990416
+          ]
+        },
+        {
+          "profile": "branches",
+          "elapsed_ms": 142,
+          "size": [
+            1084,
+            956
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            943.44,
+            1036304
+          ]
+        },
+        {
+          "profile": "stages",
+          "elapsed_ms": 139,
+          "size": [
+            1036,
+            1196
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            1127.44,
+            1239056
+          ]
+        }
+      ]
+    },
+    {
+      "fixture": "frontend/tests/fixtures/presentation.json",
+      "direction": "RIGHT",
+      "baseline": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        711,
+        577500
+      ],
+      "distinct_layouts": 3,
+      "profiles": [
+        {
+          "profile": "mainline",
+          "elapsed_ms": 127,
+          "size": [
+            1650,
+            350
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            711,
+            577500
+          ]
+        },
+        {
+          "profile": "branches",
+          "elapsed_ms": 125,
+          "size": [
+            1650,
+            398
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            807,
+            656700
+          ]
+        },
+        {
+          "profile": "stages",
+          "elapsed_ms": 124,
+          "size": [
+            1890,
+            350
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            967,
+            661500
+          ]
+        }
+      ]
+    },
+    {
+      "fixture": "frontend/tests/fixtures/incident-flow.json",
+      "direction": "DOWN",
+      "baseline": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        18,
+        7417.333335999998,
+        3153574
+      ],
+      "distinct_layouts": 3,
+      "profiles": [
+        {
+          "profile": "mainline",
+          "elapsed_ms": 329,
+          "size": [
+            1189.272,
+            2716.4199999999996
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            18,
+            7523.313335999999,
+            3230562.2462399993
+          ]
+        },
+        {
+          "profile": "branches",
+          "elapsed_ms": 339,
+          "size": [
+            1189.272,
+            2965.4199999999996
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            18,
+            8244.313336000001,
+            3526690.9742399994
+          ]
+        },
+        {
+          "profile": "stages",
+          "elapsed_ms": 343,
+          "size": [
+            1189.272,
+            3173.4199999999996
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            18,
+            8804.313335999997,
+            3774059.5502399993
+          ]
+        }
+      ]
+    },
+    {
+      "fixture": "frontend/tests/fixtures/incident-flow.json",
+      "direction": "RIGHT",
+      "baseline": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        18,
+        9263.333336,
+        2954158
+      ],
+      "distinct_layouts": 3,
+      "profiles": [
+        {
+          "profile": "mainline",
+          "elapsed_ms": 299,
+          "size": [
+            5201.544,
+            576.14
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            18,
+            9439.281336,
+            2996817.56016
+          ]
+        },
+        {
+          "profile": "branches",
+          "elapsed_ms": 328,
+          "size": [
+            5450.544,
+            576.14
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            18,
+            10160.281336000004,
+            3140276.4201599997
+          ]
+        },
+        {
+          "profile": "stages",
+          "elapsed_ms": 344,
+          "size": [
+            5658.544,
+            576.14
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            18,
+            10720.281336000004,
+            3260113.54016
+          ]
+        }
+      ]
+    },
+    {
+      "fixture": "packages/contracts/examples/flowchart.json",
+      "direction": "DOWN",
+      "baseline": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        4,
+        1093.4999990000001,
+        652545
+      ],
+      "distinct_layouts": 3,
+      "profiles": [
+        {
+          "profile": "mainline",
+          "elapsed_ms": 133,
+          "size": [
+            765,
+            872.14
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            4,
+            1108.9199990000002,
+            667187.1
+          ]
+        },
+        {
+          "profile": "branches",
+          "elapsed_ms": 127,
+          "size": [
+            813,
+            851.14
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            4,
+            1135.9199990000002,
+            691976.82
+          ]
+        },
+        {
+          "profile": "stages",
+          "elapsed_ms": 132,
+          "size": [
+            765,
+            1011.14
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            4,
+            1327.919999,
+            773522.1
+          ]
+        }
+      ]
+    },
+    {
+      "fixture": "packages/contracts/examples/flowchart.json",
+      "direction": "RIGHT",
+      "baseline": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        6,
+        980.3333339999999,
+        339183.3333333333
+      ],
+      "distinct_layouts": 3,
+      "profiles": [
+        {
+          "profile": "mainline",
+          "elapsed_ms": 120,
+          "size": [
+            1203.136,
+            286.8066666666667
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            6,
+            1022.7413339999998,
+            345067.42570666666
+          ]
+        },
+        {
+          "profile": "branches",
+          "elapsed_ms": 118,
+          "size": [
+            1182.136,
+            334.8066666666667
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            6,
+            1049.7413339999998,
+            395787.01370666665
+          ]
+        },
+        {
+          "profile": "stages",
+          "elapsed_ms": 120,
+          "size": [
+            1342.136,
+            286.8066666666667
+          ],
+          "quality": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            6,
+            1241.7413339999998,
+            384933.5523733333
+          ]
+        }
+      ]
+    }
+  ]
+}

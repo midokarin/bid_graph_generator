@@ -2,7 +2,9 @@ import type {GenerationRequest} from './domain/generated/GenerationRequest';
 import type {FlowchartSpec,FlowLayout,VersionSnapshot} from './domain/generated/ProjectFile';
 import {validateFlowchartResult} from './domain/validate';
 import {nextVersion} from './store';
+import {flowFingerprint} from './layout/flow-similarity';
 import {flowQuality} from './layout/flow-quality';
+import type {FlowLayoutOptions} from './layout/flow-profile';
 import {createGeneration,consumeGeneration,cancelGeneration} from './api/client';
 
 export const FLOW_CANDIDATES = [
@@ -11,14 +13,14 @@ export const FLOW_CANDIDATES = [
  {key:'stages',label:'阶段层次'},
 ] as const;
 export type CandidateKey=typeof FLOW_CANDIDATES[number]['key'];
-export type Candidate={key:CandidateKey;label:string;status:'queued'|'running'|'success'|'error'|'cancelled';message:string;attempts:Record<number,string>;snapshot?:VersionSnapshot;quality?:number[]};
-type Dependencies={create:typeof createGeneration;consume:typeof consumeGeneration;cancel:typeof cancelGeneration;layout:(spec:FlowchartSpec,signal:AbortSignal)=>Promise<FlowLayout>};
+export type Candidate={key:CandidateKey;label:string;status:'queued'|'running'|'success'|'error'|'cancelled';message:string;attempts:Record<number,string>;snapshot?:VersionSnapshot;quality?:number[];similarTo?:CandidateKey};
+type Dependencies={create:typeof createGeneration;consume:typeof consumeGeneration;cancel:typeof cancelGeneration;layout:(spec:FlowchartSpec,signal:AbortSignal,options?:FlowLayoutOptions)=>Promise<FlowLayout>};
 type Input={source_text:string;direction:'DOWN'|'RIGHT';title:string;style:VersionSnapshot['style']};
 export type CandidateBatch={cancel:()=>Promise<void>;done:Promise<Candidate[]>};
 
 export function recommendedCandidate(candidates:Candidate[]):CandidateKey|undefined {
  // Recommend only after there are at least two valid layouts to compare.
- const ready=candidates.filter(c=>c.snapshot&&c.quality);
+ const ready=candidates.filter(c=>c.snapshot&&c.quality&&c.quality.slice(0,5).every(n=>n===0));
  if(ready.length<2)return;
  return ready.reduce((best,candidate)=>{
   for(let i=0;i<best.quality!.length;i++){
@@ -70,11 +72,11 @@ export function startCandidateBatch(input:Input,onUpdate:(candidates:Candidate[]
    const spec=structuredClone(result.spec);
    spec.title=input.title.trim().replace(/\s+/gu,' ')||spec.title;spec.direction=input.direction;
    update(key,{message:'正在优化布局'});
-   const geometry=await dependencies.layout(spec,control.signal);
+   const geometry=await dependencies.layout(spec,control.signal,{profile:key,fontSize:input.style.font_size});
    if(control.signal.aborted)return;
    // Validate the complete snapshot before showing or recommending a candidate.
    const snapshot=nextVersion([],{revision:1,created_at:new Date().toISOString(),origin:'ai',spec,layout:geometry,style:input.style,supplements:result.supplements,summary:result.summary});
-   update(key,{status:'success',message:'已完成，待选择',snapshot,quality:flowQuality(spec,geometry)});
+   update(key,{status:'success',message:'已完成，待选择',snapshot,quality:flowQuality(spec,geometry,input.style.font_size)});
   }catch(error){
    if(!control.signal.aborted)update(key,{status:'error',message:(error as Error).message});
   }finally{if(jobId)jobs.delete(jobId)}
@@ -82,6 +84,15 @@ export function startCandidateBatch(input:Input,onUpdate:(candidates:Candidate[]
  // Two pipelines per batch; the backend also caps model concurrency across tasks.
  let next=0;
  async function worker(){while(next<FLOW_CANDIDATES.length&&!control.signal.aborted){const candidate=FLOW_CANDIDATES[next++];await run(candidate.key)}}
- const done=Promise.all([worker(),worker()]).then(()=>candidates);
+ const done=Promise.all([worker(),worker()]).then(()=>{
+  const seen=new Map<string,CandidateKey>();
+  candidates=candidates.map(candidate=>{
+   if(!candidate.snapshot)return candidate;
+   const fingerprint=flowFingerprint(candidate.snapshot),similarTo=seen.get(fingerprint);
+   if(!similarTo)seen.set(fingerprint,candidate.key);
+   return {...candidate,similarTo};
+  });
+  onUpdate(candidates);return candidates;
+ });
  return {cancel,done};
 }

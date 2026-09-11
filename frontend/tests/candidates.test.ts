@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {startCandidateBatch,recommendedCandidate,type Candidate} from '../src/candidates';
 import ELK from 'elkjs/lib/elk.bundled.js';
-import {flowGraph,readLayout} from '../src/layout/flow';
+import {optimizedFlowLayout} from '../src/layout/flow-quality';
 import {createWorkspace} from '../src/store';
 import type {ProjectFile,FlowLayout} from '../src/domain/generated/ProjectFile';
 const project=JSON.parse(readFileSync(new URL('../../packages/contracts/examples/flowchart-project.json',import.meta.url),'utf8')) as ProjectFile;
 const version=project.versions[0];
-if(version.spec.diagram_type==='flowchart')version.layout=readLayout(version.spec,await new ELK().layout(flowGraph(version.spec)));
+if(version.spec.diagram_type==='flowchart'){const elk=new ELK();version.layout=await optimizedFlowLayout(version.spec,g=>elk.layout(g),undefined,{profile:'mainline',fontSize:version.style.font_size})}
 const result={spec:version.spec,supplements:version.supplements,summary:version.summary};
 const input={source_text:'保留审核和整改关系',direction:'DOWN' as const,title:'候选测试',style:version.style};
 const layout=async()=>structuredClone(version.layout) as FlowLayout;

@@ -3,7 +3,7 @@ const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const url=process.env.BIAOSHU_WEB_URL??'http://127.0.0.1:5192';
-const out='docs/evidence/candidates';await mkdir(out,{recursive:true});
+const out=process.env.BIAOSHU_EVIDENCE_DIR??'docs/evidence/candidates';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
 const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -28,6 +28,8 @@ try{
  assert.deepEqual(requests.map(r=>r.flow_variant),['mainline','branches','stages']);
  assert.equal(new Set(requests.map(r=>r.source_text)).size,1);
  assert.equal(await visible().locator('.candidate-card.success').count(),3);
+ const variants=await visible().locator('.candidate-thumbnail svg[role=img]').evaluateAll(nodes=>nodes.map(svg=>JSON.stringify([...svg.querySelectorAll('[data-node-id]')].map(n=>n.outerHTML))));
+ assert.equal(new Set(variants).size,3,'same stub structure should produce three distinct layouts');
  assert.equal(await visible().locator('.candidate-card .sub-badge').filter({hasText:'布局推荐'}).count(),1);
  assert.equal(await button('保存项目').isEnabled(),false);
  await button('版本记录').click();assert.equal(await visible().locator('.version-card').count(),0);await button('关闭弹窗').click();
@@ -38,6 +40,7 @@ try{
  await visible().locator('.paper').waitFor();
  await button('保存项目').click();await waitFor(async()=>await page.evaluate(()=>window.__saved.length)===1);
  const saved=await page.evaluate(()=>window.__saved[0]);assert.equal(saved.versions.length,1);assert.equal(saved.current_revision,1);
+ await waitFor(async()=>await visible().locator('.task-item-title i').count()===0);
  assert.equal(await visible().locator('.task-item-title i').count(),0,'saved adopted candidate should clear task dirty indicator');
  assert.equal(saved.versions[0].layout.nodes.length,saved.versions[0].spec.nodes.length);
  assert.equal('candidates' in saved,false);
@@ -63,6 +66,6 @@ try{
  await button('载入示例').click();await button('生成图表草稿').click();await visible().locator('.paper').waitFor({timeout:30000});
  assert.equal(requests.at(-1).diagram_type,'gantt');assert.equal(requests.at(-1).flow_variant,undefined);
  assert.deepEqual(errors,[]);
- await writeFile(`${out}/browser-result.json`,JSON.stringify({provider:'local stub backend; no external model calls',checks:['three controlled prompt variants','real API, SSE, ELK worker and validation','no version before adoption','enlarged candidate preview','chosen layout saved with one version','second adoption preserves prior version','PNG and SVG export','task isolation and candidates survive switching','source changes invalidate candidates','Gantt remains single generation','1440x900, 1920x1080 and 390px mobile','no browser exceptions'],errors},null,2)+'\n');
+ await writeFile(`${out}/browser-result.json`,JSON.stringify({provider:'local stub backend; no external model calls',checks:['three distinct layouts from identical stub structure', 'three controlled prompt variants','real API, SSE, ELK worker and validation','no version before adoption','enlarged candidate preview','chosen layout saved with one version','second adoption preserves prior version','PNG and SVG export','task isolation and candidates survive switching','source changes invalidate candidates','Gantt remains single generation','1440x900, 1920x1080 and 390px mobile','no browser exceptions'],errors},null,2)+'\n');
  console.log('Local API candidate browser checks passed.');
 }finally{await browser.close()}

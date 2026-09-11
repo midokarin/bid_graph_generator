@@ -3,8 +3,12 @@ import type {FlowchartSpec,FlowLayout} from '../domain/generated/ProjectFile';
 import {orderedBranches} from './branch-order';
 import {flowGraph,readLayout} from './flow';
 import {crosses} from './connectors';
+import {applyFlowProfile,readableNodeSize,flowTextFits,type FlowLayoutOptions} from './flow-profile';
+import {labelSize,labelCollisions,placeFlowLabels,intersects} from './flow-labels';
+import {presentationLayout} from './presentation';
+import {spreadFlowProfile} from './flow-spread';
 
-export function flowQuality(spec:FlowchartSpec,layout:FlowLayout):number[] {
+export function flowQuality(spec:FlowchartSpec,layout:FlowLayout,fontSize=12):number[] {
  const nodes=new Map(layout.nodes.map(n=>[n.id,n]));
  const connections=new Map(spec.edges.map(e=>[e.id,e]));
  let order=0,nodeHits=0,crossings=0,overlaps=0,bends=0,length=0;
@@ -38,24 +42,55 @@ export function flowQuality(spec:FlowchartSpec,layout:FlowLayout):number[] {
   }
  }
  crossings=intersections.size;
- return [order,nodeHits,crossings,overlaps,bends,length,layout.width*layout.height];
+ for(let i=0;i<layout.nodes.length;i++)for(let j=i+1;j<layout.nodes.length;j++)if(intersects(layout.nodes[i],layout.nodes[j]))nodeHits++;
+ return [order,nodeHits,crossings,overlaps,labelCollisions(spec,layout,fontSize),bends,length,layout.width*layout.height];
 }
 
 const better=(a:number[],b:number[])=>{for(let i=0;i<a.length;i++){if(a[i]!==b[i])return a[i]<b[i]}return false};
 
-// Bounded, deterministic search; each expensive layout stays in the caller's
-// existing ELK worker, under the same cancellation/timeout budget.
-export async function optimizedFlowLayout(spec:FlowchartSpec,run:(graph:ElkNode)=>Promise<ElkNode>,signal?:AbortSignal):Promise<FlowLayout>{
- let best:FlowLayout|undefined,score:number[]|undefined;
+// Bounded deterministic search. Single-layout callers retain their original
+// search space; multi-candidate callers add two families of profile layouts.
+export async function optimizedFlowLayout(spec:FlowchartSpec,run:(graph:ElkNode)=>Promise<ElkNode>,signal?:AbortSignal,options:FlowLayoutOptions={}):Promise<FlowLayout>{
+ const pool:{layout:FlowLayout;quality:number[];preferred:boolean}[]=[];
+ const add=(raw:FlowLayout,preferred:boolean)=>{
+  if(options.profile&&!spec.nodes.every(node=>flowTextFits(node,spec.direction,raw.nodes.find(n=>n.id===node.id)!,options.fontSize)))return;
+  const layout=options.profile?placeFlowLabels(spec,raw,options.fontSize):raw;
+  pool.push({layout,quality:flowQuality(spec,layout,options.fontSize),preferred});
+ };
+ if(options.profile){const spine=presentationLayout(spec);if(spine)add(spine,options.profile==='mainline')}
+ for(const family of options.profile?['baseline','profile','alternative']:['baseline'])
  for(const cycle of ['GREEDY','DEPTH_FIRST'])for(const feedback of [false,true])for(const seed of [1,7]){
   if(signal?.aborted)throw new DOMException('已取消','AbortError');
   const graph=flowGraph(spec);
+  if(options.profile){
+   for(const node of graph.children??[])Object.assign(node,readableNodeSize(spec.nodes.find(n=>n.id===node.id)!,spec.direction,options.fontSize));
+   // Keep a current-layout baseline, plus two distinct layout families.
+   if(family!=='baseline'){
+    applyFlowProfile(graph,spec,options.profile);
+    if(family==='alternative')Object.assign(graph.layoutOptions!,{
+     'elk.layered.nodePlacement.strategy':options.profile==='mainline'?'BRANDES_KOEPF':'NETWORK_SIMPLEX',
+     'elk.layered.nodePlacement.bk.fixedAlignment':'NONE',
+    });
+   }
+   for(const edge of graph.edges??[])for(const label of edge.labels??[]){
+    const size=labelSize(label.text??'',options.fontSize);label.width=size.width;label.height=size.height;
+   }
+  }
   Object.assign(graph.layoutOptions!,{'elk.randomSeed':String(seed),'elk.layered.feedbackEdges':String(feedback),
    'elk.layered.cycleBreaking.strategy':cycle});
   const laidOut=await run(graph);
   if(signal?.aborted)throw new DOMException('已取消','AbortError');
-  const layout=readLayout(spec,laidOut),quality=flowQuality(spec,layout);
-  if(!score||better(quality,score)){best=layout;score=quality}
+  add(readLayout(spec,laidOut),family!=='baseline');
  }
- return best!;
+ if(options.profile&&options.profile!=='mainline')for(const candidate of [...pool].filter(c=>!c.preferred))add(spreadFlowProfile(spec,candidate.layout,options.profile),true);
+ // Quality wins over novelty: do not buy diversity with additional ordering,
+ // node, crossing, overlapping-line or label defects.
+ if(!pool.length)throw new Error('节点文字无法清晰排布，请精简文字后重试。');
+ const best=pool.reduce((a,b)=>better(b.quality,a.quality)?b:a);
+ if(!options.profile)return best.layout;
+ const safe=pool.filter(candidate=>candidate.quality.slice(0,5).every((n,i)=>n===best.quality[i]));
+ const minBends=Math.min(...safe.map(c=>c.quality[5]));
+ const minArea=Math.min(...safe.map(c=>c.layout.width*c.layout.height));
+ const preferred=safe.filter(c=>c.preferred&&c.quality[5]<=minBends+2&&c.layout.width*c.layout.height<=minArea*1.6);
+ return (preferred.length?preferred.reduce((a,b)=>better(b.quality,a.quality)?b:a):best).layout;
 }
