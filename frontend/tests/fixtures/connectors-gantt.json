@@ -1,0 +1,236 @@
+{
+  "project_file_version": "1.0",
+  "diagram_type": "gantt",
+  "source_text": "合成测试原文",
+  "current_revision": 1,
+  "versions": [
+    {
+      "revision": 1,
+      "created_at": "2026-09-10T00:00:00Z",
+      "origin": "ai",
+      "spec": {
+        "schema_version": "1.0",
+        "diagram_type": "gantt",
+        "title": "项目实施进度计划",
+        "time_unit": "calendar_day",
+        "tasks": [
+          {
+            "id": "t0",
+            "text": "现场复核与施工准备",
+            "kind": "task",
+            "duration": 3,
+            "earliest_start": null
+          },
+          {
+            "id": "t1",
+            "text": "设备材料采购与到货",
+            "kind": "task",
+            "duration": 7,
+            "earliest_start": null
+          },
+          {
+            "id": "t2",
+            "text": "管线路由放线与支架安装",
+            "kind": "task",
+            "duration": 5,
+            "earliest_start": null
+          },
+          {
+            "id": "t3",
+            "text": "消防管道安装",
+            "kind": "task",
+            "duration": 8,
+            "earliest_start": null
+          },
+          {
+            "id": "t4",
+            "text": "报警线路敷设",
+            "kind": "task",
+            "duration": 6,
+            "earliest_start": null
+          },
+          {
+            "id": "t5",
+            "text": "终端设备安装",
+            "kind": "task",
+            "duration": 4,
+            "earliest_start": null
+          },
+          {
+            "id": "t6",
+            "text": "系统联合调试",
+            "kind": "task",
+            "duration": 4,
+            "earliest_start": null
+          },
+          {
+            "id": "t7",
+            "text": "验收资料整理与竣工验收",
+            "kind": "task",
+            "duration": 4,
+            "earliest_start": null
+          },
+          {
+            "id": "t8",
+            "text": "项目交付",
+            "kind": "milestone",
+            "duration": 0,
+            "earliest_start": null
+          }
+        ],
+        "dependencies": [
+          {
+            "id": "d0",
+            "source": "t0",
+            "target": "t1",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d1",
+            "source": "t0",
+            "target": "t2",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d2",
+            "source": "t1",
+            "target": "t3",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d3",
+            "source": "t2",
+            "target": "t3",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d4",
+            "source": "t1",
+            "target": "t4",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d5",
+            "source": "t3",
+            "target": "t5",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d6",
+            "source": "t4",
+            "target": "t5",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d7",
+            "source": "t5",
+            "target": "t6",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d8",
+            "source": "t6",
+            "target": "t7",
+            "type": "FS",
+            "lag": 0
+          },
+          {
+            "id": "d9",
+            "source": "t7",
+            "target": "t8",
+            "type": "FS",
+            "lag": 0
+          }
+        ]
+      },
+      "supplements": [],
+      "summary": "合成连线回归样例",
+      "layout": {
+        "diagram_type": "gantt",
+        "width": 900,
+        "height": 924,
+        "tasks": [
+          {
+            "id": "t0",
+            "start": 0,
+            "end": 3,
+            "row": 0
+          },
+          {
+            "id": "t1",
+            "start": 3,
+            "end": 10,
+            "row": 1
+          },
+          {
+            "id": "t2",
+            "start": 3,
+            "end": 8,
+            "row": 2
+          },
+          {
+            "id": "t3",
+            "start": 10,
+            "end": 18,
+            "row": 3
+          },
+          {
+            "id": "t4",
+            "start": 10,
+            "end": 16,
+            "row": 4
+          },
+          {
+            "id": "t5",
+            "start": 18,
+            "end": 22,
+            "row": 5
+          },
+          {
+            "id": "t6",
+            "start": 22,
+            "end": 26,
+            "row": 6
+          },
+          {
+            "id": "t7",
+            "start": 26,
+            "end": 30,
+            "row": 7
+          },
+          {
+            "id": "t8",
+            "start": 30,
+            "end": 30,
+            "row": 8
+          }
+        ]
+      },
+      "style": {
+        "template": "print",
+        "font_family": "宋体",
+        "font_size": 12,
+        "text_color": "#000000",
+        "stroke_color": "#000000",
+        "fill_color": "#FFFFFF",
+        "background_color": "#FFFFFF",
+        "transparent_background": false,
+        "stroke_width": 2.5,
+        "corner_radius": 0,
+        "gantt_bar_style": "outline",
+        "gantt_grid": "rows"
+      }
+    }
+  ],
+  "metadata": {
+    "fixture": true
+  }
+}

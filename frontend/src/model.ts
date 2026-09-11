@@ -1,5 +1,6 @@
 import type {VersionSnapshot,Style,FlowLayout,FlowEdge} from './domain/generated/ProjectFile';
 import {TEXT_LIMITS,wrapText,flowLines} from './layout/flow';
+import {edgePort,routePorts,relocateLabel} from './layout/connectors';
 export type Kind='flowchart'|'gantt';
 export type Appearance={fontFamily:string;textColor:string;strokeColor:string;backgroundColor:string;fillColor:string;strokeWidth:number;cornerRadius:number;fontWeight:400|600|700;borderStyle:'solid'|'dashed';nodeAccent:'none'|'top'|'left';ganttBarStyle:'solid'|'outline'|'hatched';ganttGrid:'full'|'rows'|'banded'};
 export const FONTS=['sans-serif','Arial','宋体','黑体','微软雅黑','PingFang SC'];
@@ -24,17 +25,18 @@ export function moved(layout:FlowLayout,id:string,x:number,y:number,connections:
  const next=structuredClone(layout),node=next.nodes.find(n=>n.id===id)!;
  if(!Number.isFinite(x)||!Number.isFinite(y)||x<5||y<5||x+node.width>layout.width-5||y+node.height>layout.height-5)throw new Error('节点超出画布。');
  const dx=x-node.x,dy=y-node.y;node.x=x;node.y=y;
- // Move attached endpoints and insert orthogonal elbows, without rerunning ELK.
+ if(!dx&&!dy)return next;
  for(const edge of next.edges){
-  const connection=connections.find(e=>e.id===edge.id)!;
-  for(const first of [true,false]){
-   const i=first?0:edge.points.length-1;
-   if((first?connection.source:connection.target)!==id)continue;
-   const p=edge.points[i],other=edge.points[first?1:i-1];
-   const point={x:p.x+dx,y:p.y+dy};
-   const elbow=p.x===other.x?{x:point.x,y:other.y}:{x:other.x,y:point.y};
-   if(first)edge.points.splice(0,1,point,elbow);else edge.points.splice(i,1,elbow,point);
+  const connection=connections.find(e=>e.id===edge.id);
+  if(!connection||(connection.source!==id&&connection.target!==id))continue;
+  const original=layout.edges.find(e=>e.id===edge.id)!;
+  const from=layout.nodes.find(n=>n.id===connection.source)!,to=layout.nodes.find(n=>n.id===connection.target)!;
+  const source=edgePort(original.points,from,true),target=edgePort(original.points,to,false);
+  for(const [port,nodeId] of [[source,connection.source],[target,connection.target]] as const){
+   if(nodeId===id){port.point.x+=dx;port.point.y+=dy;port.box=node;}
   }
+  edge.points=routePorts(source,target,next.nodes,layout.width,layout.height) as typeof edge.points;
+  edge.label_position=relocateLabel(original,edge.points,connection.label);
  }
  return next;
 }
