@@ -63,3 +63,16 @@ test('multi-branch layout and readable text bounds',async()=>{
  const long=structuredClone(version);if(long.spec.diagram_type==='flowchart')long.spec.nodes[0].text='长'.repeat(61);
  assert.throws(()=>nextVersion([version],long),/精简/);
 });
+
+test('sequential gantt preserves complete labels, 23-day finish and zero-duration milestone in SVG',()=>{
+ const result=read('gantt-sequential') as GanttResult;
+ const script="import json,sys; from app.domain.contracts import GanttResult; from app.domain.scheduling import schedule; print(json.dumps([t.model_dump() for t in schedule(GanttResult.model_validate_json(sys.stdin.read()).spec)]))";
+ const tasks=JSON.parse(execFileSync('../.venv/bin/python',['-c',script],{cwd:'../backend',input:JSON.stringify(result),encoding:'utf8'}));
+ assert.deepEqual(tasks.map((t:{start:number;end:number})=>[t.start,t.end]),[[0,3],[3,23],[23,23]]);
+ const svg=renderToStaticMarkup(createElement(Diagram,{snapshot:view(base(result,{diagram_type:'gantt',width:900,height:420,tasks}))}));
+ for(const task of result.spec.tasks)assert.ok(svg.includes(task.text));
+ assert.equal((svg.match(/data-task-id=/g)??[]).length,3);
+ assert.equal((svg.match(/data-dependency-id=/g)??[]).length,2);
+ assert.ok(svg.includes('data-task-id="accept" data-start="23" data-end="23"'));
+ assert.ok(svg.includes('完工：23'));
+});

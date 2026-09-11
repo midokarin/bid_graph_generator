@@ -74,6 +74,20 @@ async def create(client, kind="flowchart", direction="DOWN"):
 
 
 class APITests(unittest.IsolatedAsyncioTestCase):
+    async def test_sequential_gantt_keeps_all_tasks_and_finish_milestone(self):
+        # Hand-authored fixture: verifies the service/SSE path, not LLM comprehension.
+        provider = ScriptedProvider([fixture("gantt-sequential")])
+        async with api(provider) as (client, _):
+            job = await create(client, "gantt")
+            events = parse_events(await client.get(job["events_url"]))
+            self.assertEqual(events[-1]["data"]["state"], "completed")
+            result = next(e["data"] for e in events if e["event"] == "result")
+            self.assertEqual(result, json.loads(fixture("gantt-sequential")))
+            tasks = next(e["data"]["tasks"] for e in events if e["event"] == "schedule")
+            self.assertEqual([(t["id"], t["start"], t["end"]) for t in tasks],
+                             [("prepare", 0, 3), ("implement", 3, 23), ("accept", 23, 23)])
+            self.assertEqual(len(provider.calls), 1)
+
     async def test_sse_success_repair_and_cancel(self):
         for kind in ["flowchart", "gantt"]:
             for repair in [False, True]:

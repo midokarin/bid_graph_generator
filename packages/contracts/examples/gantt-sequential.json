@@ -1,0 +1,19 @@
+{
+  "spec": {
+    "schema_version": "1.0",
+    "diagram_type": "gantt",
+    "title": "顺序任务与完工里程碑",
+    "time_unit": "calendar_day",
+    "tasks": [
+      {"id": "prepare", "text": "准备工作", "kind": "task", "duration": 3, "earliest_start": 0},
+      {"id": "implement", "text": "项目实施", "kind": "task", "duration": 20, "earliest_start": null},
+      {"id": "accept", "text": "交付验收", "kind": "milestone", "duration": 0, "earliest_start": null}
+    ],
+    "dependencies": [
+      {"id": "d1", "source": "prepare", "target": "implement", "type": "FS", "lag": 0},
+      {"id": "d2", "source": "implement", "target": "accept", "type": "FS", "lag": 0}
+    ]
+  },
+  "supplements": [],
+  "summary": "两项顺序任务完成后立即发生验收里程碑。"
+}
