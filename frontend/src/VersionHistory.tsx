@@ -4,13 +4,14 @@ import type { Snapshot } from './model';
 
 type Props = {
   taskName?: string;
+  disabled?: boolean;
   history: Snapshot[];
   currentRevision: number | null;
   onSelect: (snapshot: Snapshot) => void;
   onRestore: () => void;
 };
 
-export function VersionHistory({ taskName, history, currentRevision, onSelect, onRestore }: Props) {
+export function VersionHistory({ taskName, disabled=false, history, currentRevision, onSelect, onRestore }: Props) {
   return <>
     <h2>版本记录</h2>
     <p className="muted">{taskName&&<><strong>{taskName}</strong> · </>}仅当前任务的版本。点击条目切换查看。</p>
@@ -20,6 +21,7 @@ export function VersionHistory({ taskName, history, currentRevision, onSelect, o
           {[...history].reverse().map(item => <button
             className={`version-card ${currentRevision === item.revision ? 'selected' : ''}`}
             type="button"
+            disabled={disabled}
             key={item.revision}
             aria-pressed={currentRevision === item.revision}
             onClick={() => onSelect(item)}
@@ -34,6 +36,6 @@ export function VersionHistory({ taskName, history, currentRevision, onSelect, o
             </span>
           </button>)}
         </div>}
-    <button className="button full" disabled={history.length < 2} onClick={onRestore}><RotateCcw size={15}/>将当前查看恢复为新版本</button>
+    <button className="button full" disabled={disabled || history.length < 2} onClick={onRestore}><RotateCcw size={15}/>将当前查看恢复为新版本</button>
   </>;
 }

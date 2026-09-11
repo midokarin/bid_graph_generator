@@ -1,0 +1,187 @@
+/* Module layout. Host tokens and shared controls are imported before these rules. */
+.bid-graph{--green:var(--brand);--line:var(--border);font-family:var(--font-sans);font-size:14px;color:var(--text);background:var(--app-bg);min-width:0;line-height:1.5;isolation:isolate;container-type:inline-size}
+.bid-graph .task-workbench{min-height:100dvh}
+.bid-graph .task-workbench[hidden],.bid-graph .editor-grid[hidden]{display:none}
+.bid-graph .product-sidebar{width:224px;position:sticky;top:0;inset-inline-start:auto;height:100dvh;flex:0 0 224px;background:var(--sidebar-bg);border-color:var(--border);padding:0 16px;gap:0;z-index:8}
+.bid-graph .product-brand{display:flex;align-items:center;gap:10px;height:76px;flex-shrink:0;border-bottom:1px solid var(--border);margin:0 -16px 18px;padding:0 20px;background:var(--surface)}
+.bid-graph .product-brand-icon{display:grid;place-items:center;width:36px;height:36px;color:var(--brand);background:var(--brand-soft);border-radius:11px}
+.bid-graph .product-brand strong{font-size:15px;letter-spacing:.2px;line-height:1.35;white-space:nowrap}
+.bid-graph .product-brand strong span{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:4px}
+.bid-graph .project-entry{display:flex;align-items:center;gap:10px;text-align:left;padding:11px 10px;background:var(--surface);border:1px solid var(--gray-border);border-radius:10px;box-shadow:var(--shadow-xs)}
+.bid-graph .project-entry>span:nth-child(2){flex:1;min-width:0}
+.bid-graph .project-entry strong,.bid-graph .module-entry strong{display:block;font-size:13px}
+.bid-graph .project-entry small,.bid-graph .module-entry small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.bid-graph .product-icon-tile{width:34px;height:36px;background:var(--brand-soft);color:var(--brand);border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+.bid-graph .sidebar-kicker{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:1px;color:var(--muted);margin:28px 7px 13px}
+.bid-graph .sidebar-kicker i{width:5px;height:5px;background:var(--brand);border-radius:50%}
+.bid-graph .module-entry{display:flex;align-items:center;gap:10px;padding:13px 10px;background:var(--selected-bg);border:1px solid var(--selected-border);border-radius:10px;box-shadow:inset 3px 0 var(--brand)}
+.bid-graph .module-entry small{color:var(--brand-text)}
+.bid-graph .task-navigation{margin-top:24px;padding-top:0;border-top:0}
+.bid-graph .task-section-heading{padding:0 5px;margin-bottom:12px}
+.bid-graph .task-section-heading strong{color:var(--muted);font-size:11px}
+.bid-graph .new-task{background:var(--surface);border:1px dashed var(--gray-border);font-size:12px;box-shadow:none}
+.bid-graph .task-row{border-radius:9px;border-color:transparent}
+.bid-graph .task-row.selected{background:var(--brand-soft);border-color:var(--brand-border)}
+.bid-graph .task-item-title{font-size:12px;color:var(--text-strong)}
+.bid-graph .task-item-status{color:var(--muted)}
+.bid-graph .task-item-status.success{color:var(--success-text)}
+.bid-graph .task-more{color:var(--muted)}
+.bid-graph .task-list-hint{font-size:10px;color:var(--faint);line-height:1.8}
+.bid-graph .product-sidebar .rail-bottom{margin-top:auto;flex-shrink:0;padding:12px 0}
+.bid-graph .rail-item{color:var(--muted)}
+.bid-graph .rail-item:hover{background:var(--brand-soft);color:var(--brand)}
+.bid-graph .theme-switch{display:flex;padding:4px;margin:12px 0;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);gap:2px}
+.bid-graph .theme-switch button{display:flex;justify-content:center;align-items:center;gap:4px;font-size:10px;padding:7px 4px;flex:1;white-space:nowrap;border-radius:7px;color:var(--muted)}
+.bid-graph .theme-switch button[aria-pressed=true]{color:var(--brand);background:var(--surface);box-shadow:var(--shadow-xs)}
+.bid-graph .collapse-sidebar{background:var(--surface);border:1px solid var(--border);width:30px;height:30px}
+.bid-graph .product-sidebar.is-collapsed{width:68px;flex-basis:68px;padding:0 10px}
+.bid-graph .is-collapsed .product-brand{padding:0 16px;margin-inline:-10px}
+.bid-graph .is-collapsed .product-brand strong,.bid-graph .is-collapsed .project-entry,.bid-graph .is-collapsed .sidebar-kicker,.bid-graph .is-collapsed .module-entry,.bid-graph .is-collapsed .task-navigation,.bid-graph .is-collapsed .rail-item span,.bid-graph .is-collapsed .theme-switch{display:none}
+.bid-graph .is-collapsed .rail-item{padding:10px;justify-content:center}
+.bid-graph .task-workbench .workspace{margin-left:0;min-width:0;flex:1;background:var(--app-bg)}
+.bid-graph .module-header{height:76px;padding:0 28px;background:var(--surface);border-color:var(--border)}
+.bid-graph .header-title{min-width:0;gap:12px;font-size:12px}
+.bid-graph .header-title strong{font-size:14px;letter-spacing:0;color:var(--text-strong);white-space:nowrap}
+.bid-graph .header-title .header-project{color:var(--muted);overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.bid-graph .header-title .breadcrumb-divider{color:var(--gray-border)}
+.bid-graph .save-status{color:var(--muted);font-size:11px;white-space:nowrap}
+.bid-graph .save-status i{background:var(--warning)}
+.bid-graph .button{border-radius:8px;border-color:var(--border);color:var(--text-strong);background:var(--surface);box-shadow:var(--shadow-xs);font-size:12px;min-height:34px}
+.bid-graph .button:hover:not(:disabled){background:var(--brand-soft);border-color:var(--brand-border);color:var(--brand-text)}
+.bid-graph .button.primary{background:var(--brand-grad);border-color:var(--brand);color:#fff;box-shadow:var(--shadow-brand)}
+.bid-graph .button.primary:hover:not(:disabled){background:var(--brand-dark);color:#fff}
+.bid-graph .button:disabled{box-shadow:none}
+.bid-graph .icon-button{color:var(--muted);border-radius:7px}
+.bid-graph .icon-button:hover:not(:disabled){color:var(--brand);background:var(--brand-soft)}
+.bid-graph .project-heading{padding:24px 28px 15px;gap:16px}
+.bid-graph .project-heading h1{font-size:19px;letter-spacing:0;color:var(--text);font-weight:650;overflow-wrap:anywhere}
+.bid-graph .project-heading p{font-size:12px;color:var(--muted);margin-top:6px}
+.bid-graph .local-pill{padding:5px 9px;background:transparent;border:0;color:var(--muted);font-size:11px;white-space:nowrap}
+.bid-graph .local-pill>span{background:var(--brand)}
+.bid-graph .workspace-tabs{display:flex;margin:0 28px 20px;border-bottom:1px solid var(--border);height:47px;gap:30px}
+.bid-graph .workspace-tabs button{position:relative;display:flex;align-items:center;gap:8px;padding:0 6px;font-size:13px;color:var(--muted);border-bottom:3px solid transparent}
+.bid-graph .workspace-tabs button.selected{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.bid-graph .workspace-tabs small{display:grid;place-items:center;min-width:18px;height:18px;border-radius:12px;padding:0 5px;background:var(--gray-soft);color:var(--muted);font-size:10px}
+.bid-graph .workspace-tabs .selected small{background:var(--brand);color:var(--surface)}
+.bid-graph .editor-grid{display:grid;grid-template-columns:310px minmax(0,1fr);gap:18px;margin:0 28px 24px;min-height:620px;height:calc(100dvh - 259px)}
+.bid-graph .editor-grid.with-templates{grid-template-columns:290px minmax(300px,1fr) 226px}
+.bid-graph .panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-xs)}
+.bid-graph .panel-tabs{height:54px;gap:24px;padding-inline:20px}
+.bid-graph .panel-tabs button{color:var(--muted);font-size:12px}
+.bid-graph .panel-tabs button.selected{color:var(--brand);border-color:var(--brand)}
+.bid-graph .input-scroll{padding:21px 20px}
+.bid-graph .field-label{color:var(--text-strong);font-size:12px;margin-top:23px}
+.bid-graph .optional,.bid-graph .input-caption,.bid-graph .source-note{color:var(--faint)}
+.bid-graph input,.bid-graph select,.bid-graph textarea{background:var(--surface);border-color:var(--border);color:var(--text-strong);border-radius:8px;font-size:12px}
+.bid-graph input:focus,.bid-graph select:focus,.bid-graph textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--focus-ring-color)}
+.bid-graph :is(button,a,input,textarea,select):focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.bid-graph .kind-picker button{color:var(--muted);border-radius:8px;height:42px}
+.bid-graph .kind-picker button.selected{background:var(--brand-soft);color:var(--brand);border-color:var(--brand-border)}
+.bid-graph .business-text{min-height:185px;line-height:1.9;background:var(--surface-3)}
+.bid-graph .text-button{color:var(--brand-text);font-size:11px}
+.bid-graph .generate-footer{padding:16px 20px;background:var(--surface)}
+.bid-graph .generate{height:42px;border-radius:9px}
+.bid-graph .generate-footer>span{color:var(--muted)}
+.bid-graph .glass-select{display:block;width:100%}
+.bid-graph .glass-select-trigger{width:100%;min-height:39px;background:var(--surface);font-size:12px;border:1px solid var(--border);border-radius:8px}
+.bid-graph .glass-select-pop{z-index:50;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-lg);max-width:calc(100vw - 24px);margin:0;list-style:none;color:var(--text)}
+.bid-graph .preview-toolbar{height:54px;padding:0 18px}
+.bid-graph .preview-toolbar>div{font-size:12px}
+.bid-graph .status-dot{background:var(--brand)}
+.bid-graph .sub-badge{background:var(--brand-soft);color:var(--brand-text)}
+.bid-graph .canvas-area{background-color:var(--surface-2);background-image:radial-gradient(var(--gray-border) .65px,transparent .65px);background-size:18px 18px;min-height:380px;padding:20px 20px 48px}
+.bid-graph .canvas-info{color:var(--muted)}
+.bid-graph .canvas-bottom{color:var(--muted)}
+.bid-graph .canvas-bottom>span{background:var(--surface-2)}
+.bid-graph .zoom-controls{background:var(--surface);color:var(--muted)}
+.bid-graph .paper{border-color:#e2e6ee;box-shadow:0 4px 20px #1721370a}
+.bid-graph .preview-actions{padding:12px 18px;background:var(--surface)}
+.bid-graph .template-heading{height:54px;padding:0 16px;color:var(--text-strong)}
+.bid-graph .template-heading>svg{color:var(--brand)}
+.bid-graph .template-scroll{padding:15px}
+.bid-graph .template-card{background:var(--surface);border-radius:8px}
+.bid-graph .template-card.selected{border-color:var(--brand);background:var(--brand-softer)}
+.bid-graph .template-card-label strong{color:var(--text-strong)}
+.bid-graph .template-card p,.bid-graph .template-note{color:var(--muted)}
+.bid-graph .template-filters button{background:var(--surface);color:var(--muted);border-color:var(--border);border-radius:12px}
+.bid-graph .template-filters button[aria-pressed=true]{background:var(--brand-soft);border-color:var(--brand-border);color:var(--brand)}
+.bid-graph .template-tags span{background:var(--gray-soft);color:var(--muted)}
+.bid-graph .template-footer{background:var(--surface)}
+.bid-graph .activity-panel{margin:0 28px 24px;min-height:460px;padding:24px;max-width:1100px}
+.bid-graph .activity-panel h2{font-size:16px;margin-bottom:10px}
+.bid-graph .activity-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:370px;gap:16px;color:var(--muted);font-size:12px}
+.bid-graph .activity-empty>svg{color:var(--brand)}
+.bid-graph .activity-empty strong{color:var(--text-strong);font-size:15px}
+.bid-graph .activity-panel .run-stream{margin-top:22px}
+.bid-graph .activity-panel .run-log{max-height:480px}
+.bid-graph .muted{color:var(--muted)}
+.bid-graph dialog{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-strong)}
+.bid-graph dialog::backdrop{background:var(--backdrop);backdrop-filter:blur(3px)}
+.bid-graph .edit-popover{background:var(--surface);border-color:var(--border);box-shadow:var(--shadow-lg)}
+.bid-graph .expanded-preview-canvas{background:var(--surface-2)}
+.bid-graph .style-preview-bar{background:var(--brand-soft);border-color:var(--brand-border);color:var(--brand-text)}
+.bid-graph .style-presets button{background:var(--surface);color:var(--muted)}
+.bid-graph .style-presets button.selected,.bid-graph .style-presets button:hover:not(:disabled){background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.bid-graph .style-heading>span{background:var(--brand-soft);color:var(--brand)}
+.bid-graph .version-card{background:var(--surface);border-color:var(--border)}
+.bid-graph .version-card.selected{background:var(--brand-soft);border-color:var(--brand-border)}
+.bid-graph .embedded-tasks{margin:14px 28px;border-bottom:1px solid var(--border);padding-bottom:10px;color:var(--muted);font-size:12px}
+.bid-graph .embedded-tasks summary{cursor:pointer}
+.bid-graph .embedded-tasks .task-navigation{max-height:320px}
+.bid-graph[data-embedded] .task-workbench{min-height:100%;height:100%}
+.bid-graph[data-embedded] .workspace{width:100%}
+@container (max-width:1100px){
+ .bid-graph .editor-grid.with-templates{grid-template-columns:280px minmax(0,1fr)}
+ .bid-graph .with-templates .template-panel{grid-column:1/-1;max-height:440px}
+ .bid-graph .with-templates .template-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+ .bid-graph .editor-grid.with-templates{height:auto}
+ .bid-graph .product-sidebar{width:200px;flex-basis:200px;padding-inline:12px}
+ .bid-graph .editor-grid{grid-template-columns:280px minmax(0,1fr);margin-inline:20px;gap:14px}
+ .bid-graph .header-project,.bid-graph .breadcrumb-divider{display:none}
+}
+@container (max-width:850px){
+ .bid-graph .product-sidebar{display:none}
+ .bid-graph .module-header{padding-inline:20px}
+ .bid-graph .editor-grid{height:auto;min-height:600px}
+ .bid-graph .preview-panel{min-height:620px}
+}
+@container (max-width:600px){
+ .bid-graph .module-header{height:auto;min-height:64px;padding:14px;gap:10px;flex-wrap:wrap}
+ .bid-graph .header-actions{gap:6px}.bid-graph .save-status{display:none}
+ .bid-graph .header-actions .button{padding:7px 10px;font-size:11px}
+ .bid-graph .project-heading{padding:20px 16px 12px}.bid-graph .project-heading h1{font-size:18px}.bid-graph .project-heading p{font-size:11px}
+ .bid-graph .local-pill{display:none}
+ .bid-graph .workspace-tabs{margin:0 16px 16px;gap:12px}.bid-graph .workspace-tabs button{font-size:12px;gap:5px;padding-inline:4px}
+ .bid-graph .editor-grid,.bid-graph .editor-grid.with-templates{display:flex;flex-direction:column;margin:0 14px 20px;gap:16px;height:auto}
+ .bid-graph .input-panel{min-height:0}.bid-graph .input-scroll{max-height:none}.bid-graph .business-text{min-height:160px}
+ .bid-graph .preview-panel{min-height:540px}.bid-graph .canvas-area{min-height:370px}
+ .bid-graph .with-templates .template-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .bid-graph .activity-panel{margin:0 14px 20px;padding:18px}
+ .bid-graph .embedded-tasks{margin-inline:16px}
+ .bid-graph .canvas-toolbar-actions{gap:4px}.bid-graph .preview-toolbar{padding-inline:12px}
+ .bid-graph .canvas-bottom{left:10px;right:10px}.bid-graph .canvas-bottom>span{max-width:60%;font-size:10px}
+}
+.bid-graph .mobile-tasks{display:none}
+@container (max-width:850px){.bid-graph .mobile-tasks{display:block}}
+.bid-graph .glass-select-trigger{padding:8px 11px}
+.bid-graph .task-navigation{min-height:150px}
+.bid-graph .product-sidebar{overflow-y:auto}
+.bid-graph .task-list{flex-shrink:0;max-height:38vh}
+.bid-graph .template-card.selected{box-shadow:0 0 0 1px var(--brand)}
+.bid-graph .run-stream,.bid-graph .run-stream-head,.bid-graph .run-stream-body,.bid-graph .run-log,.bid-graph .run-json-output{background:var(--surface);color:var(--muted);border-color:var(--border)}
+.bid-graph .run-json-output pre{background:var(--surface-2);color:var(--text-strong)}
+.bid-graph .candidate-card{background:var(--surface);border-color:var(--border)}
+.bid-graph .candidate-card p{color:var(--muted)}
+.bid-graph .input-scroll>.field-label:first-child{margin-top:0}
+.bid-graph .input-scroll .field-label{margin-top:17px}
+.bid-graph .multi-generate-toggle input{width:30px;height:17px;padding:0;background:var(--gray-border);border-radius:20px;border:0;flex:none}
+.bid-graph .multi-generate-toggle input:checked{background:var(--brand)}
+.bid-graph .run-stream-summary,.bid-graph .run-stream-heading{background:var(--surface-2);color:var(--muted)}
+.bid-graph .run-stream-state,.bid-graph .run-event.success .run-event-message{color:var(--success-text)}
+.bid-graph .run-stream .json-stream{background:var(--surface-2);color:var(--text-strong);border-color:var(--border)}
+.bid-graph.bid-graph-portal{position:fixed;inset:0;pointer-events:none;background:transparent;container-type:normal;z-index:1300}
+.bid-graph-portal .glass-select-pop{pointer-events:auto}
+.bid-graph .toast{background:var(--toast-glass-bg);color:#fff;border:1px solid var(--glass-border);border-radius:12px;box-shadow:var(--shadow-lg);backdrop-filter:var(--glass-blur)}
+.bid-graph .activity-panel .run-stream-body{max-height:560px}
+.bid-graph .activity-panel .run-stream-events{height:360px}
+.bid-graph .activity-panel .version-card:disabled{opacity:.5}

@@ -45,3 +45,7 @@ export function consumeGeneration(url:string,onMessage:(message:StreamMessage)=>
   source.onerror=()=>{if(source.readyState===EventSource.CLOSED){close();reject(new Error('事件连接关闭，请重试。'))}};
  });
 }
+
+/** Per-module service boundary; hosts may supply their authenticated transport. */
+export const standaloneGeneration={getHealth,createGeneration,cancelGeneration,consumeGeneration};
+export type GenerationAdapter=typeof standaloneGeneration;

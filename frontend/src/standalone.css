@@ -1,0 +1,2 @@
+/* Only the standalone entry owns the document. Do not import in the host. */
+body{margin:0}

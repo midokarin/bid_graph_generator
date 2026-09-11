@@ -1,0 +1,25 @@
+{
+  "browser": "Chrome headless",
+  "model": "fixture only; host injected adapter also verified",
+  "checks": [
+    "empty canvas",
+    "host GlassSelect pointer and keyboard",
+    "flowchart generation and layout",
+    "style commit and history",
+    "run details",
+    "light/dark",
+    "1440 and 1920 viewports",
+    "PNG download",
+    "gantt generation",
+    "task isolation",
+    "390px mobile",
+    "760px embedded containment",
+    "host CSS and dark theme",
+    "two embedded instances isolated",
+    "host initial text/generation/save/open/export and dirty notifications",
+    "failed save retains dirty",
+    "three candidates use host generation adapter",
+    "no global module CSS selectors"
+  ],
+  "pageErrors": []
+}

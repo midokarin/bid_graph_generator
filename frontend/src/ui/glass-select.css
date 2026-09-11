@@ -1,0 +1,104 @@
+/* Adapted from the host GlassSelect styles. */
+.bid-graph .glass-select {
+  display: inline-flex;
+  min-width: 0;
+}
+.bid-graph .glass-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.bid-graph .glass-select-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.bid-graph .glass-select-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bid-graph .glass-select-trigger > svg {
+  flex: none;
+  color: var(--faint);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.bid-graph .glass-select[data-open] .glass-select-trigger > svg {
+  transform: rotate(180deg);
+}
+.bid-graph .glass-select-pop {
+  position: fixed;
+  z-index: 1300; /* 高于 ns-editor-backdrop(1000)/modal-veil(100)，portal 层不被遮挡 */
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--glass-bg);
+  background-image: var(--liquid-sheen), var(--liquid-depth);
+  backdrop-filter: var(--liquid-blur);
+  -webkit-backdrop-filter: var(--liquid-blur);
+  box-shadow:
+    inset 0 1px 0 var(--liquid-hi),
+    inset 0 -1px 0 var(--liquid-lo),
+    inset 0 0 0 1px var(--liquid-rim),
+    var(--liquid-shadow);
+  animation: glass-select-in 0.16s var(--ease-out);
+}
+.bid-graph .glass-select-pop.open-up {
+  animation-name: glass-select-in-up;
+}
+.bid-graph .glass-select-pop li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bid-graph .glass-select-pop li.active {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.bid-graph .glass-select-pop li[aria-selected='true'] {
+  font-weight: 600;
+}
+.bid-graph .glass-select-pop li > svg {
+  flex: none;
+  color: var(--brand);
+}
+.bid-graph .glass-select-pop > ul {
+  margin: 0;
+  padding: 0;
+}
+.bid-graph .glass-select-pop {
+  border-radius: 13px;
+}
+.bid-graph .glass-select-trigger {
+  transition: transform 0.14s var(--ease-out);
+}
+.bid-graph .glass-select-trigger:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.bid-graph .glass-select-pop li.active {
+  background: rgba(37, 99, 235, 0.1);
+}

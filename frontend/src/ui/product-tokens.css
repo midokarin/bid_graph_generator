@@ -1,0 +1,307 @@
+/* Design tokens adapted from bidAgent-frontend/src/styles.css. See SOURCE.md. */
+.bid-graph {
+  /* ===== 字体系统 ===== */
+  --font-sans: 'Manrope', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei',
+    system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-family: var(--font-sans);
+  color: #161d2b;
+  background: #f4f6fa;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  color-scheme: light;
+  --topbar-h: 46px; /* 顶栏高度：右上组件迁入侧栏后压缩，释放右侧垂直空间 */
+
+  /* ===== 品牌色 ===== */
+  --brand: #2563eb;
+  --brand-dark: #1d4ed8;
+  --brand-soft: #e9f1fd;
+  --brand-softer: #f5f9fe;
+  --brand-border: #b7d0f6;
+  --brand-text: #1c56c6;
+  /* 选中态：比 hover/普通态更强的对比，保证一眼可辨 */
+  --selected-bg: linear-gradient(100deg, #dbe9fd, #e9f1fe);
+  --selected-border: #92bcf3;
+  --selected-accent: #2563eb;
+  /* 目录预览行选择（LineSelectableMarkdown）区间底色：品牌靛，浅/深色主题各自校准 */
+  --line-select-bg: rgba(37, 99, 235, 0.1);
+  --line-select-bg-strong: rgba(37, 99, 235, 0.16);
+
+  /* ===== 语义色（浅色主题均满足 WCAG AA 文本对比度） ===== */
+  --mint: #14b8a6;
+  --mint-soft: #dff7f3;
+  --mint-text: #0f6e64;
+  --success: #159e66;
+  --success-soft: #e4f7ee;
+  --success-border: #b3e4cd;
+  --success-text: #0f7a4f;
+  --danger: #d64541;
+  --danger-soft: #fdf1f0;
+  --danger-border: #efc9c7;
+  --warning: #b97a0e;
+  --warning-soft: #fdf6e3;
+  --warning-border: #ecd9a0;
+  --warning-text: #7d5616;
+  --info-soft: #e7f0fd;
+  --info-text: #2459ad;
+  /* 进度徽章扩展色相（浅色）：紫/橙/玫红，与既有 mint/success/warning 拼出六步分色 */
+  --violet-soft: #f1eefc;
+  --violet-text: #5f3cbf;
+  --orange-soft: #fdeee0;
+  --orange-text: #a8520c;
+  --rose-soft: #fceef4;
+  --rose-text: #b83a6e;
+
+  /* ===== 中性色（muted ≥4.8:1 / faint ≥4.5:1，达 WCAG AA） ===== */
+  --text: #161d2b;
+  --text-strong: #2b3342;
+  --muted: #5d6678;
+  --faint: #757e8f;
+  --border: #e2e6ee;
+  --gray-soft: #f0f2f6;
+  --gray-border: #d7dce6;
+  --disabled: #c3c7d2;
+
+  /* ===== 表面层级 ===== */
+  --surface: #ffffff;
+  --surface-2: #f7f8fb;
+  --surface-3: #fafbfc;
+  --app-bg: #f4f6fa;
+  --backdrop: rgba(18, 23, 36, 0.5);
+  --on-accent: #ffffff;
+
+  /* ===== 侧栏与左列顶栏底色 ===== */
+  /* 侧栏比纯白内容卡片低半档：冷灰纵向渐变、底部掺微量品牌色，
+     半透明让基底氛围光（左下 mint 光斑）微微透出，与右侧内容区一眼可辨。
+     注意 color-mix 只接受两个颜色分量，品牌色须经内层嵌套混入 */
+  --sidebar-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-2) 90%, transparent),
+    color-mix(in srgb, color-mix(in srgb, var(--app-bg) 93%, var(--brand)) 90%, transparent)
+  );
+
+  /* ===== 侧栏大按钮（项目切换 / 企业知识库）卡片令牌 =====
+     浅色：卡片用最亮的 --surface 纯白浮在灰蓝侧栏轨道上，描边升档至 gray-border
+     并加一档浅影，与轨道拉开明度层级；图标块用品牌淡蓝底（同项目管理下拉菜单
+     图标块配方），蓝图标/淡蓝块/白卡片三层色阶互不重叠 */
+  --sidebar-card-bg: var(--surface);
+  --sidebar-card-icon-bg: var(--brand-soft);
+  --sidebar-card-border: var(--gray-border);
+  --sidebar-card-shadow: var(--shadow-xs);
+
+  /* ===== 阴影尺度（低饱和冷调，边缘更干净） ===== */
+  --shadow-xs: 0 1px 2px rgba(23, 30, 55, 0.05);
+  --shadow-sm: 0 2px 8px rgba(23, 30, 55, 0.06);
+  --shadow: 0 8px 28px rgba(23, 30, 55, 0.08);
+  --shadow-lg: 0 14px 40px rgba(23, 30, 55, 0.12);
+  --shadow-strong: 0 16px 44px rgba(23, 30, 55, 0.16);
+  --shadow-brand: 0 4px 14px rgba(37, 99, 235, 0.26);
+  --shadow-brand-lg: 0 8px 22px rgba(37, 99, 235, 0.32);
+
+  /* ===== 圆角尺度 ===== */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* ===== 动效令牌 ===== */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-fast: 0.14s;
+  --dur-med: 0.22s;
+  --dur-slow: 0.34s;
+
+  /* ===== 焦点环与选中色 ===== */
+  --focus-ring-color: rgba(37, 99, 235, 0.28);
+  --selection-bg: #cfe1fb;
+
+  /* ===== 品牌渐变与全局氛围光 ===== */
+  --brand-grad: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  --ambient-brand: rgba(37, 99, 235, 0.055);
+  --ambient-mint: rgba(20, 184, 166, 0.04);
+
+  /* ===== 玻璃拟态（苹果风毛玻璃浮层） ===== */
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.62);
+  --glass-blur: blur(20px) saturate(1.8);
+  --toast-glass-bg: rgba(39, 48, 64, 0.78);
+
+  /* ===== 字号尺度 ===== */
+  --font-caption: 12px;
+  --font-body: 14px;
+  --font-title: 16px;
+  --font-heading: 20px;
+  --font-display: 24px;
+  --line-caption: 18px;
+  --line-body: 22px;
+}
+[data-theme='dark'] .bid-graph, .bid-graph[data-theme='dark'] {
+  color: #e6e9f1;
+  background: #111111;
+  color-scheme: dark;
+  --brand: #60a5fa;
+  --brand-dark: #83b4fb;
+  /* hover/选中底色统一走中性灰（去品牌蓝），只靠明度差拉开对比 */
+  --brand-soft: #2b2b2b;
+  --brand-softer: #242424;
+  --brand-border: #2f4b80;
+  --brand-text: #a3c2fb;
+  /* 选中态：中性灰渐变 + 灰描边/强调条，与未选中保持可见明度差 */
+  --selected-bg: linear-gradient(100deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.06));
+  --selected-border: #4f4f4f;
+  --selected-accent: #a0a0a0;
+  /* 目录预览行选择区间底色（暗色校准，中性灰） */
+  --line-select-bg: rgba(255, 255, 255, 0.07);
+  --line-select-bg-strong: rgba(255, 255, 255, 0.11);
+  --mint: #2fd4c2;
+  --mint-soft: #0f3a35;
+  --mint-text: #4bdccc;
+  --success: #34c186;
+  --success-soft: #123528;
+  --success-border: #1f5c43;
+  --success-text: #56e0a4;
+  --danger: #e5665d;
+  --danger-soft: #3a2321;
+  --danger-border: #5e3633;
+  --warning: #d99f2e;
+  --warning-soft: #3a2f14;
+  --warning-border: #5e4c24;
+  --warning-text: #ecbd60;
+  --info-soft: #1b2f47;
+  --info-text: #74acf6;
+  /* 进度徽章扩展色相（暗色）：深色底 + 亮文字，对齐既有语义色暗色校准口径 */
+  --violet-soft: #2a2440;
+  --violet-text: #b6a1f2;
+  --orange-soft: #3a2917;
+  --orange-text: #f2a35c;
+  --rose-soft: #3a2233;
+  --rose-text: #f291b9;
+  /* 中性色：去蓝调纯灰阶，对齐 #111111 中性基底；faint ≥4.5:1 */
+  --text: #ececec;
+  --text-strong: #d9d9d9;
+  --muted: #a0a0a0;
+  --faint: #7f7f7f;
+  --border: #2e2e2e;
+  --gray-soft: #222222;
+  --gray-border: #363636;
+  --disabled: #3f3f3f;
+  /* 表面层级：中性灰四层递进，卡片叠加时有清晰纵深 */
+  --surface: #1a1a1a;
+  --surface-2: #1f1f1f;
+  --surface-3: #242424;
+  --app-bg: #111111;
+  --backdrop: rgba(0, 0, 0, 0.64);
+  /* 侧栏与左列顶栏底色：比 #1a1a1a 内容卡片更深的下沉灰轨（卡片保持最亮表层），
+     纵向微渐变给出纵深；暗色无氛围光，故用实色 */
+  --sidebar-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 30%, var(--app-bg)),
+    color-mix(in srgb, var(--surface) 12%, var(--app-bg))
+  );
+  /* 侧栏大按钮沿用原配方：surface-2 卡片亮于下沉灰轨，surface 图标块内凹 */
+  --sidebar-card-bg: var(--surface-2);
+  --sidebar-card-icon-bg: var(--surface);
+  --sidebar-card-border: var(--border);
+  --sidebar-card-shadow: none;
+  /* 阴影：纯黑深影 + 顶部内高光（在优化层叠加）塑造暗色立体层次 */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.32);
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 14px 40px rgba(0, 0, 0, 0.5);
+  --shadow-strong: 0 16px 44px rgba(0, 0, 0, 0.56);
+  --shadow-brand: 0 4px 14px rgba(96, 165, 250, 0.3);
+  --shadow-brand-lg: 0 8px 22px rgba(96, 165, 250, 0.38);
+  --focus-ring-color: rgba(147, 197, 253, 0.42);
+  --selection-bg: rgba(96, 165, 250, 0.42);
+  --brand-grad: linear-gradient(135deg, #7fb1fb, #3b82f6);
+  /* 暗色不加氛围光染色：保证 #111111 基底纯净（Codex 式中性黑） */
+  --ambient-brand: transparent;
+  --ambient-mint: transparent;
+  /* 玻璃拟态：暗色玻璃压低不透明度，透出 #111111 基底 */
+  --glass-bg: rgba(26, 26, 26, 0.52);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --toast-glass-bg: rgba(40, 40, 40, 0.72);
+}
+.bid-graph {
+  /* 折射滤镜：饱和提亮，让底层色彩微微「渗」进玻璃 */
+  --liquid-blur: blur(24px) saturate(2.2) brightness(1.08);
+  /* 受光：顶部入射光 / 底部漫反射 / 内侧折射描边 */
+  --liquid-hi: rgba(255, 255, 255, 0.95);
+  /* 浅色出射边改为深色发丝线：白叠白在白底上不可见（深色主题仍覆盖为 12% 白） */
+  --liquid-lo: rgba(15, 23, 42, 0.08);
+  --liquid-rim: rgba(255, 255, 255, 0.72);
+  /* 斜向光泽 + 底部纵深：模拟曲面玻璃的反光带与弧面暗部 */
+  --liquid-sheen: linear-gradient(165deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.1) 45%, transparent 68%);
+  --liquid-depth: linear-gradient(0deg, rgba(23, 30, 55, 0.07), transparent 30%);
+  --liquid-shadow: 0 20px 56px rgba(23, 30, 55, 0.22);
+  /* 原玻璃令牌升级为液态折射滤镜，浮层菜单等直接消费者同步受益 */
+  --glass-blur: var(--liquid-blur);
+}
+[data-theme='dark'] .bid-graph, .bid-graph[data-theme='dark'] {
+  --liquid-blur: blur(24px) saturate(1.9) brightness(1.22);
+  --liquid-hi: rgba(255, 255, 255, 0.35);
+  --liquid-lo: rgba(255, 255, 255, 0.12);
+  --liquid-rim: rgba(255, 255, 255, 0.2);
+  --liquid-sheen: linear-gradient(165deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04) 45%, transparent 68%);
+  --liquid-depth: linear-gradient(0deg, rgba(0, 0, 0, 0.22), transparent 32%);
+  --liquid-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  --glass-blur: var(--liquid-blur);
+}
+.bid-graph {
+  --liquid-glow-focus:
+    0 1px 4.5px color-mix(in srgb, var(--faint) 26%, transparent),
+    0 3px 11px color-mix(in srgb, var(--faint) 18%, transparent),
+    0 1px 20px color-mix(in srgb, var(--faint) 10%, transparent);
+}
+.bid-graph {
+  /* 玻璃体填充：高通透，底层色彩可透过 */
+  --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.24));
+  /* 上白下深折射边：顶缘入射白光，底缘深色出射边——浅色玻璃轮廓的来源 */
+  --lg-rim: linear-gradient(165deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.55) 24%,
+    rgba(15, 23, 42, 0.1) 58%,
+    rgba(15, 23, 42, 0.2) 100%);
+  /* 顶部入射光斑 */
+  --lg-glint: radial-gradient(115% 85% at 50% -28%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 56%);
+  /* 浮动软阴影 + 底部内衬反光 */
+  --lg-shadow: 0 14px 44px rgba(23, 30, 55, 0.16), 0 2px 10px rgba(23, 30, 55, 0.08);
+  /* 顶部内高光（白）+ 底部内衬（深）：配合 --lg-rim 勾出浅色玻璃厚度 */
+  --lg-inner: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(15, 23, 42, 0.05);
+}
+[data-theme='dark'] .bid-graph, .bid-graph[data-theme='dark'] {
+  --lg-fill: linear-gradient(180deg, rgba(38, 41, 50, 0.5), rgba(24, 26, 32, 0.38));
+  --lg-rim: linear-gradient(165deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.2) 22%,
+    rgba(255, 255, 255, 0.08) 48%,
+    rgba(255, 255, 255, 0.04) 64%,
+    rgba(255, 255, 255, 0.18) 100%);
+  --lg-glint: radial-gradient(115% 85% at 50% -28%, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 56%);
+  --lg-shadow: 0 18px 52px rgba(0, 0, 0, 0.58), 0 3px 12px rgba(0, 0, 0, 0.42);
+  --lg-inner: inset 0 -1px 0 rgba(255, 255, 255, 0.09);
+}
+.bid-graph {
+  --dialog-fill: linear-gradient(160deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 248, 255, 0.96) 48%, rgba(229, 237, 249, 0.94) 100%);
+  --dialog-backdrop: rgba(15, 23, 42, 0.18);
+  --dialog-label: #4b5870;
+}
+[data-theme='dark'] .bid-graph, .bid-graph[data-theme='dark'] {
+  --dialog-fill: linear-gradient(160deg, rgba(53, 59, 73, 0.98) 0%, rgba(36, 42, 54, 0.96) 48%, rgba(28, 33, 44, 0.94) 100%);
+  --dialog-backdrop: rgba(0, 0, 0, 0.28);
+  --dialog-label: #bdc8da;
+}
+.bid-graph {
+  /* 高通透填充：与深色菜单 54~66% 不透明度档位对齐，背后色块可渗入 */
+  --lgm-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.32));
+  --lgm-shadow:
+    0 18px 48px rgba(23, 30, 55, 0.26),
+    0 4px 14px rgba(23, 30, 55, 0.12);
+}
+[data-theme='dark'] .bid-graph, .bid-graph[data-theme='dark'] {
+  --lgm-fill: linear-gradient(180deg, rgba(38, 41, 50, 0.66), rgba(24, 26, 32, 0.54));
+  --lgm-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.58),
+    0 4px 14px rgba(0, 0, 0, 0.38);
+}
