@@ -1,0 +1,31 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {applyProposal,view,TITLE_MAX_LENGTH,type Proposal} from '../src/model';
+import {nextVersion} from '../src/store';
+import {parseProject} from '../src/project/files';
+import {svgText,DEFAULT_EXPORT} from '../src/project/export';
+import ELK from 'elkjs/lib/elk.bundled.js';
+import {flowGraph,readLayout} from '../src/layout/flow';
+
+for(const kind of ['flowchart','gantt'])test(`${kind}: title edits preserve geometry, history and export through project round-trip`,async()=>{
+ const {project}=parseProject(readFileSync(new URL(`../../packages/contracts/examples/${kind}-project.json`,import.meta.url),'utf8'));
+ const original=project.versions[0];
+ if(original.spec.diagram_type==='flowchart')original.layout=readLayout(original.spec,await new ELK().layout(flowGraph(original.spec)));
+ const snapshot=view(original);
+ const proposal:Proposal={baseRevision:snapshot.revision,field:'title',before:snapshot.title,after:'  设备安装调试与验收  ',impact:''};
+ const edited=nextVersion(project.versions,applyProposal(snapshot,proposal));
+ assert.equal(edited.spec.title,'设备安装调试与验收');
+ assert.equal(edited.origin,'text');assert.deepEqual(edited.layout,original.layout);assert.deepEqual(edited.style,original.style);
+ assert.deepEqual({...edited.spec,title:original.spec.title},original.spec);
+ const restored=parseProject(JSON.stringify({...project,current_revision:edited.revision,versions:[...project.versions,edited]})).project;
+ assert.deepEqual(restored.versions[0],original);assert.equal(restored.versions.at(-1)!.spec.title,edited.spec.title);
+ const svg=await svgText(view(restored.versions.at(-1)!),DEFAULT_EXPORT);
+ assert.ok(svg.includes(edited.spec.title));assert.ok(!svg.includes(snapshot.title));assert.ok(!svg.includes('title-editor'));
+ assert.throws(()=>applyProposal(snapshot,{...proposal,after:'   '}),/不能为空/);
+ assert.throws(()=>applyProposal(snapshot,{...proposal,after:'题'.repeat(TITLE_MAX_LENGTH+1)}),/过长/);
+ assert.throws(()=>applyProposal(snapshot,{...proposal,before:'旧标题'}),/已变化/);
+ assert.throws(()=>applyProposal(snapshot,{...proposal,baseRevision:99}),/已变化/);
+ const longest=applyProposal(snapshot,{...proposal,after:'题'.repeat(TITLE_MAX_LENGTH)});
+ assert.doesNotThrow(()=>nextVersion(project.versions,longest));
+});

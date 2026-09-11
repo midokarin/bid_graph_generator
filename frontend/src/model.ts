@@ -3,6 +3,8 @@ import {TEXT_LIMITS,flowLines} from './layout/flow';
 import {GANTT_TEXT,ganttText} from './layout/gantt';
 import {edgePort,routePorts,relocateLabel} from './layout/connectors';
 export type Kind='flowchart'|'gantt';
+// Matches the authoritative title bound in the shared JSON Schema.
+export const TITLE_MAX_LENGTH=200;
 export type Appearance={fontFamily:string;textColor:string;strokeColor:string;backgroundColor:string;fillColor:string;strokeWidth:number;cornerRadius:number;fontWeight:400|600|700;borderStyle:'solid'|'dashed';nodeAccent:'none'|'top'|'left';ganttBarStyle:'solid'|'outline'|'hatched';ganttGrid:'full'|'rows'|'banded'};
 export const FONTS=['sans-serif','Arial','宋体','黑体','微软雅黑','PingFang SC'];
 export const DEFAULT_APPEARANCE:Appearance={fontFamily:'sans-serif',textColor:'#000000',strokeColor:'#000000',backgroundColor:'#FFFFFF',fillColor:'#FFFFFF',strokeWidth:1.5,cornerRadius:5,fontWeight:400,borderStyle:'solid',nodeAccent:'none',ganttBarStyle:'solid',ganttGrid:'full'};
@@ -56,8 +58,12 @@ export function applyProposal(s:Snapshot,p:Proposal):VersionSnapshot{
   const point=JSON.parse(String(p.after));v.layout=moved(v.layout,p.target!,point.x,point.y,v.spec.diagram_type==='flowchart'?v.spec.edges:[]);v.origin='position';
  }else{
   const value=String(p.after).trim();
-  if(!value||value.length>(p.field==='title'?160:p.field==='taskText'?TEXT_LIMITS.task:TEXT_LIMITS.flow))throw new Error('文字过长，请精简后再应用。');
-  if(p.field==='title')v.spec.title=value;
+  if(!value)throw new Error(p.field==='title'?'图题不能为空。':'文字不能为空。');
+  if((p.field==='title'?Array.from(value).length:value.length)>(p.field==='title'?TITLE_MAX_LENGTH:p.field==='taskText'?TEXT_LIMITS.task:TEXT_LIMITS.flow))throw new Error('文字过长，请精简后再应用。');
+  if(p.field==='title'){
+   if(v.spec.title!==p.before)throw new Error('图题已变化，请重新编辑。');
+   v.spec.title=value.replace(/\s+/gu,' ');
+  }
   else {const items=v.spec.diagram_type==='flowchart'?v.spec.nodes:v.spec.tasks;const item=items.find(n=>n.id===p.target);if(!item||item.text!==p.before)throw new Error('对象已变化');item.text=value;}
   v.origin='text';
  }

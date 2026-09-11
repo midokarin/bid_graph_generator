@@ -1,0 +1,32 @@
+{
+  "browser": "153.0.8010.36",
+  "model": "synthetic SSE; no external model calls",
+  "checks": [
+    {
+      "kind": "flowchart",
+      "modelTitlePreserved": true,
+      "customTitlePriority": true,
+      "cancelAndBlankSafe": true,
+      "historyAndRoundTrip": true,
+      "layoutPreserved": true,
+      "pngSize": [
+        2295,
+        2709
+      ],
+      "pageErrors": []
+    },
+    {
+      "kind": "gantt",
+      "modelTitlePreserved": true,
+      "customTitlePriority": true,
+      "cancelAndBlankSafe": true,
+      "historyAndRoundTrip": true,
+      "layoutPreserved": true,
+      "pngSize": [
+        2700,
+        1956
+      ],
+      "pageErrors": []
+    }
+  ]
+}

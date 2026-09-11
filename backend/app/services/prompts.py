@@ -3,6 +3,12 @@ import json
 from app.providers.schema import native_schema
 from .calendar_reference import calendar_reference
 
+TITLE_PROMPT = """图题 title 是对整张图业务主题的简洁摘要，不是原文首句或任务清单。
+先识别业务对象、核心工作和覆盖范围，再概括为适合标书插图的名词短语；通常 8–24 个汉字，信息完整时可适当放宽。
+流程图突出“业务对象 + 核心流程”，甘特图突出“业务对象 + 实施进度/阶段计划”。例如“设备到货检查、安装调试、验收”可概括为“设备安装调试与验收流程”或“设备安装调试进度计划”。示例仅说明命名方法，不得套用到无关业务。
+原文有准确且覆盖整图的明确图题时优先沿用；否则自行概括。不要使用“流程图”“甘特图”“项目计划”等缺乏业务信息的泛称，不堆砌全部步骤，不添加原文没有的项目名、地点、年份或承诺。
+title 只写单行标题，不加引号、图号或说明前缀；summary 另用简短完整句子说明图表主要内容，不与 title 混用。"""
+
 FLOWCHART_PROMPT = """把业务文字整理为流程图 JSON。只返回符合给定 Schema 的最终 JSON，不输出推理、代码、SVG、HTML 或 Mermaid。
 节点 text 必须保留完整且可读的业务短语，如“需求分析与确认”，不得截成首字、首词或无意义缩写。分支 label 使用完整条件，如“合格”“不合格”。
 最多 20 个节点。使用六种受控节点类型。审核若无分支使用 process，有分支才使用 decision。
@@ -28,7 +34,7 @@ GANTT_PROMPT = """把业务文字整理为甘特图 JSON。只返回符合给定
 def system_prompt(request, schema):
     prompt = (FLOWCHART_PROMPT.format(direction=request.direction)
               if request.diagram_type == "flowchart" else GANTT_PROMPT)
-    return (prompt + "\n只压缩机器表示，不压缩业务内容：JSON 不缩进、不添加排版空白；"
+    return (prompt + "\n" + TITLE_PROMPT + "\n只压缩机器表示，不压缩业务内容：JSON 不缩进、不添加排版空白；"
             "新生成的任务/节点 ID 使用 t1、t2 / n1、n2，依赖/连线 ID 使用 e1、e2 这类简短唯一编号，"
             "引用必须一致。text、label、title、summary 和 supplements 仍须保留完整业务含义，"
             "不得为缩短输出遗漏任务、依赖或补充说明。修复时保留已有 ID。"

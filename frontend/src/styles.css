@@ -129,3 +129,10 @@
  .task-section-heading{margin:0}.new-task{min-height:30px;padding:5px 10px;font-size:11px}.task-section-heading>span{margin-right:auto;margin-left:10px}
  .task-list{grid-column:1/-1;flex-direction:row;margin:0;padding:2px 0;overflow-x:auto}.task-item{width:164px;padding:8px 10px}.task-item-status{margin-top:4px}
 }
+
+/* Title stays in the existing heading; controls appear only while unlocked. */
+.paper-heading{overflow-wrap:anywhere}
+.title-edit-button{font:inherit;letter-spacing:inherit;color:inherit;text-align:inherit;max-width:100%;overflow-wrap:anywhere;padding:0;cursor:text}
+.title-edit-button:hover{text-decoration:underline dotted;text-underline-offset:5px}
+.title-edit-button:focus-visible{outline:2px solid #719782;outline-offset:4px;border-radius:3px}
+.title-editor{font:inherit;letter-spacing:inherit;color:inherit;text-align:center;padding:3px 6px}
