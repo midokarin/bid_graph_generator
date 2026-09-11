@@ -167,6 +167,12 @@ class APITests(unittest.IsolatedAsyncioTestCase):
                 events = parse_events(await client.get(job["events_url"]))
                 self.assertEqual(events[-1]["data"]["state"], "failed")
                 self.assertEqual(next(e["data"]["code"] for e in events if e["event"] == "error"), code)
+                if code == "PROVIDER_TIMEOUT":
+                    error = next(e["data"] for e in events if e["event"] == "error")
+                    self.assertIn("0.02 秒", error["message"])
+                    self.assertIn("推理", error["message"])
+                    self.assertFalse(any(e["event"] == "result" for e in events))
+                    self.assertTrue(provider.cancel_seen.is_set())
         async with api(ScriptedProvider([fixture("flowchart")])) as (client, _):
             self.assertEqual((await client.get("/api/v1/health")).json()["provider"], "stub")
             self.assertEqual((await client.get("/api/v1/generations/absent/events")).status_code, 404)

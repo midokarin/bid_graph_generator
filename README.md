@@ -109,7 +109,7 @@ SSE 中间文本仅供观察，只有 `result` 可供正式业务消费。HTTP 4
 
 左下角“模型设置”填写 Base URL、模型名和 API Key，保存后立即用于后续生成。空 Key 保留已有密钥；读取接口只返回遮盖状态。配置保存在用户配置目录中的 `biaoshu2/settings.json`：macOS 为 `~/Library/Application Support`，Windows 为 `%APPDATA%`，Linux 为绝对路径 `$XDG_CONFIG_HOME` 或 `~/.config`。密钥以明文保存，文件仅当前用户可读写（平台权限语义以实际系统为准）。
 
-已有配置文件优先；首次运行无配置文件时读取以下环境变量，不自动写入文件。
+已有配置文件优先；首次运行无配置文件时读取以下环境变量，不自动写入文件。例外是显式设置的 `BIAOSHU_TIMEOUT`，它也覆盖已保存的时限，便于升级旧版配置。
 
 | 变量 | 默认值 | 作用 |
 |---|---|---|
@@ -118,7 +118,7 @@ SSE 中间文本仅供观察，只有 `result` 可供正式业务消费。HTTP 4
 | `BIAOSHU_MODEL` | 空 | 供应商模型名 |
 | `BIAOSHU_API_KEY` | 空 | 仅后端读取的 Key |
 | `BIAOSHU_STRUCTURED_OUTPUT` | `auto` | `auto`、`required`、`off` |
-| `BIAOSHU_TIMEOUT` | `120` | 每次生成/修复的总秒数，上限 600 |
+| `BIAOSHU_TIMEOUT` | `600` | 每次生成/修复的总秒数，包含模型推理与 JSON 输出，上限 600；显式设置时覆盖本机已保存的旧时限 |
 
 `auto` 优先请求原生 `json_schema`；仅当供应商明确报告 `response_format` 不受支持时，退回提示词 Schema。鉴权、限流、一般 Schema 错误不触发降级。`off` 可适配只支持提示词约束的接口。无论模式如何，本地校验始终执行。
 

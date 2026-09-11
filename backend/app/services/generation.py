@@ -111,7 +111,9 @@ class GenerationService:
         except (ProviderError, TimeoutError) as exc:
             if job.state != "cancelled":
                 code = str(exc) if isinstance(exc, ProviderError) else "PROVIDER_TIMEOUT"
-                job.emit("error", {"message": "模型请求未完成，请检查配置或稍后重试。", "code": code, "details": []})
+                message = (f"模型请求超时（本次总时限 {self.timeout:g} 秒）。模型可能仍在推理或输出，复杂流程需要更长的等待时间，请稍后重试。"
+                           if code == "PROVIDER_TIMEOUT" else "模型请求未完成，请检查配置或稍后重试。")
+                job.emit("error", {"message": message, "code": code, "details": []})
                 self.status(job, "failed", attempt)
         except Exception:
             if job.state != "cancelled":

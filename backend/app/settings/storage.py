@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
 from . import Settings
 
@@ -25,7 +25,12 @@ def config_directory(platform=None, env=None, home=None):
 def load_settings(directory=None):
     path = (Path(directory) if directory else config_directory()) / "settings.json"
     if path.exists():
-        return Settings(**json.loads(path.read_text(encoding="utf-8")))
+        settings = Settings(**json.loads(path.read_text(encoding="utf-8")))
+        # Allow an explicit launch-time budget to override an older saved value.
+        # Keep provider credentials and other saved preferences unchanged.
+        if "BIAOSHU_TIMEOUT" in os.environ:
+            settings = replace(settings, timeout=float(os.environ["BIAOSHU_TIMEOUT"]))
+        return settings
     return Settings.from_env()
 
 

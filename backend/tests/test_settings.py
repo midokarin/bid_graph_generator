@@ -10,6 +10,22 @@ from app.settings.storage import config_directory, load_settings, save_settings
 from app.domain.migrations import migrate_project
 
 class SettingsAndFilesTests(unittest.TestCase):
+    def test_launch_timeout_overrides_saved_legacy_budget_without_rewriting_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            legacy = Settings(provider='openai', api_key='synthetic-only', model='test', timeout=120)
+            save_settings(legacy, directory)
+            path = Path(directory) / 'settings.json'
+            before = path.read_bytes()
+            with patch.dict('os.environ', {'BIAOSHU_TIMEOUT': '600'}):
+                loaded = load_settings(directory)
+                self.assertEqual(loaded.timeout, 600)
+                self.assertEqual(loaded.api_key, legacy.api_key)
+                self.assertEqual(loaded.model, legacy.model)
+            self.assertEqual(path.read_bytes(), before)
+            with patch.dict('os.environ', {'BIAOSHU_TIMEOUT': '601'}):
+                with self.assertRaises(ValueError):
+                    load_settings(directory)
+
     def test_platform_paths_and_atomic_config(self):
         self.assertEqual(str(config_directory('darwin', {}, '/users/test')), '/users/test/Library/Application Support/biaoshu2')
         self.assertEqual(str(config_directory('linux', {'XDG_CONFIG_HOME':'relative'}, '/users/test')), '/users/test/.config/biaoshu2')
