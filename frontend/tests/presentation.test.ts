@@ -4,11 +4,11 @@ import {readFileSync} from 'node:fs';
 import {createElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {presentationLayout} from '../src/layout/presentation';
-import {flowGraph,readLayout,wrapText} from '../src/layout/flow';
+import {flowGraph,readLayout,wrapText,flowLines} from '../src/layout/flow';
 import {Diagram} from '../src/Diagram';
 import {DEFAULT_STYLE,assertReadable,view} from '../src/model';
 import {svgText,DEFAULT_EXPORT} from '../src/project/export';
-import type {FlowchartSpec,VersionSnapshot} from '../src/domain/generated/ProjectFile';
+import type {FlowchartSpec,VersionSnapshot,NodeGeometry} from '../src/domain/generated/ProjectFile';
 import ELK from 'elkjs/lib/elk.bundled.js';
 const sample=()=>JSON.parse(readFileSync(new URL('./fixtures/presentation.json',import.meta.url),'utf8')) as FlowchartSpec;
 const version=(spec:FlowchartSpec):VersionSnapshot=>({spec,layout:presentationLayout(spec)!,style:DEFAULT_STYLE,revision:1,created_at:'2026-09-11T00:00:00Z',origin:'ai',supplements:[],summary:'合成回归样例'});
@@ -48,10 +48,38 @@ test('60-character multiline nodes fit their geometry without losing text',()=>{
  assert.equal((svg.match(/长/g)??[]).length,120); // accessible name and visible text
  assert.equal((svg.match(/检/g)??[]).length,121); // plus the return-edge label
 });
-test('horizontal and multi-branch graphs keep ELK fallback',async()=>{
- for(const spec of [{...sample(),direction:'RIGHT' as const},{...sample(),edges:[...sample().edges,{id:'extra',source:'n1',target:'n5',kind:'normal' as const,label:'提前交付'}]}]){
+test('multi-branch graphs keep ELK fallback in both directions',async()=>{
+ for(const direction of ['RIGHT','DOWN'] as const){const spec={...sample(),direction,edges:[...sample().edges,{id:'extra',source:'n1',target:'n5',kind:'normal' as const,label:'提前交付'}]};
   assert.equal(presentationLayout(spec),null);
   const layout=readLayout(spec,await new ELK().layout(flowGraph(spec)));
   assert.equal(layout.nodes.length,spec.nodes.length);assert.equal(layout.edges.length,spec.edges.length);
  }
+});
+
+test('horizontal spine is compact, aligned and separates correction paths',async()=>{
+ const spec={...sample(),direction:'RIGHT' as const},v=version(spec),layout=v.layout;
+ assert.equal(layout.diagram_type,'flowchart');if(layout.diagram_type!=='flowchart')return;
+ assertReadable(v);assert.ok(layout.width<1750);
+ const decision=layout.nodes.find(n=>n.id==='n4')!,side=layout.nodes.find(n=>n.id==='n7')!;
+ assert.ok(side.y>decision.y+decision.height);
+ assert.equal(side.x+side.width/2,decision.x+decision.width/2);
+ for(const n of layout.nodes.filter(n=>n.id!=='n7'))assert.equal(n.y+n.height/2,decision.y+decision.height/2);
+ for(const edge of layout.edges){
+  for(let i=1;i<edge.points.length;i++){
+   const a=edge.points[i-1],b=edge.points[i];assert.ok(a.x===b.x||a.y===b.y);
+   for(const n of layout.nodes as NodeGeometry[]){
+    const crosses:boolean=a.x===b.x?a.x>n.x&&a.x<n.x+n.width&&Math.max(a.y,b.y)>n.y&&Math.min(a.y,b.y)<n.y+n.height:a.y>n.y&&a.y<n.y+n.height&&Math.max(a.x,b.x)>n.x&&Math.min(a.x,b.x)<n.x+n.width;
+    // Diamond bounding boxes include empty corners used by their ports.
+    if(spec.nodes.find(s=>s.id===n.id)!.type!=='decision')assert.equal(crosses,false,`${edge.id} crosses ${n.id}`);
+   }
+  }
+ }
+ const exported=await svgText(view(v),DEFAULT_EXPORT);assert.ok(exported.includes('问题整改'));
+ spec.nodes[1]!.text='长'.repeat(60);assertReadable(version(spec));
+});
+
+test('existing wide horizontal snapshots retain twelve-character wrapping',()=>{
+ const text='长'.repeat(60);
+ assert.deepEqual(flowLines(text,'RIGHT',{width:320},'process'),wrapText(text));
+ assert.deepEqual(flowLines(text,'RIGHT',{width:496},'decision'),wrapText(text));
 });

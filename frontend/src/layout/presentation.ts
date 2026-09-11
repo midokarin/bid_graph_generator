@@ -1,10 +1,9 @@
 import type {FlowchartSpec,FlowLayout} from '../domain/generated/ProjectFile';
-import {wrapText} from './flow';
+import {wrapText,nodeSize} from './flow';
 
 // A single spine with direct correction loops has a clearer document layout
 // than a layered cycle. Other graph topologies continue through ELK.
 export function presentationLayout(spec:FlowchartSpec):FlowLayout|null {
- if(spec.direction!=='DOWN')return null;
  const byId=new Map(spec.nodes.map(n=>[n.id,n]));
  const loops=spec.edges.filter(e=>e.kind==='rework');
  const sideIds=new Set(loops.map(e=>e.source));
@@ -28,6 +27,7 @@ export function presentationLayout(spec:FlowchartSpec):FlowLayout|null {
   current=next.length?byId.get(next[0].target):undefined;
  }
  if(spine.length+sideIds.size!==spec.nodes.length||spineEdges.length!==spine.length-1)return null;
+ if(spec.direction==='RIGHT')return horizontalSpine(spec,spine,sideIds);
  const nodes:FlowLayout['nodes']=[];
  const maxWidth=Math.max(320,...spine.filter(n=>n.type==='decision').map(n=>Math.min(12,Array.from(n.text).length)*40+16));
  const center=maxWidth/2+44,padding=44;
@@ -76,4 +76,47 @@ export function presentationLayout(spec:FlowchartSpec):FlowLayout|null {
   width+=shift;
  }
  return {diagram_type:'flowchart',direction:'DOWN',width,height:y-52+padding,nodes,edges};
+}
+
+// Keep correction loops local to their decision, below a common horizontal axis.
+function horizontalSpine(spec:FlowchartSpec,spine:FlowchartSpec['nodes'][number][],sideIds:Set<string>):FlowLayout {
+ const padding=36,nodes:FlowLayout['nodes']=[];
+ const center=padding+Math.max(...spine.map(n=>nodeSize(n,'RIGHT').height))/2;
+ let x=padding;
+ for(const node of spine){
+  const size=nodeSize(node,'RIGHT');nodes.push({id:node.id,x,y:center-size.height/2,...size});
+  const outgoing=spec.edges.find(e=>e.source===node.id&&!sideIds.has(e.target));
+  const correction=spec.edges.find(e=>e.kind==='rework'&&e.target===node.id);
+  const side=correction?spec.nodes.find(n=>n.id===correction.source):undefined;
+  const loopSpace=side?Math.max(0,(nodeSize(side,'RIGHT').width-size.width)/2)+48+Array.from(correction?.label??'').length*18:0;
+  x+=size.width+Math.max(48,Array.from(outgoing?.label??'').length*18+24,loopSpace);
+ }
+ let height=center*2;
+ for(const id of sideIds){
+  const node=spec.nodes.find(n=>n.id===id)!,back=spec.edges.find(e=>e.source===id)!;
+  const decision=nodes.find(n=>n.id===back.target)!,size=nodeSize(node,'RIGHT');
+  const gap=Math.max(72,Array.from(spec.edges.find(e=>e.target===id)?.label??'').length*18+24);
+  const side={id,x:decision.x+decision.width/2-size.width/2,y:decision.y+decision.height+gap,...size};
+  nodes.push(side);height=Math.max(height,side.y+side.height+padding);
+ }
+ const edges:FlowLayout['edges']=spec.edges.map(e=>{
+  const from=nodes.find(n=>n.id===e.source)!,to=nodes.find(n=>n.id===e.target)!;
+  let points:{x:number;y:number}[],label_position:{x:number;y:number}|null=null;
+  if(sideIds.has(e.target)){
+   const cx=from.x+from.width/2;
+   points=[{x:cx,y:from.y+from.height},{x:cx,y:to.y}];
+   if(e.label)label_position={x:cx-Array.from(e.label).length*9-12,y:(points[0].y+to.y)/2+6};
+  }else if(sideIds.has(e.source)){
+   const lane=Math.max(from.x+from.width,to.x+to.width)+24;
+   const landing={x:to.x+to.width*.75,y:to.y+to.height*.75};
+   points=[{x:from.x+from.width,y:from.y+from.height/2},{x:lane,y:from.y+from.height/2},{x:lane,y:landing.y},{...landing}];
+   if(e.label)label_position={x:lane+12+Array.from(e.label).length*9,y:(landing.y+from.y+from.height/2)/2};
+  }else{
+   points=[{x:from.x+from.width,y:center},{x:to.x,y:center}];
+   if(e.label)label_position={x:(points[0].x+to.x)/2,y:center-14};
+  }
+  return {id:e.id,points:points as FlowLayout['edges'][number]['points'],label_position};
+ });
+ const width=Math.max(...nodes.map(n=>n.x+n.width),...edges.map(e=>e.label_position?e.label_position.x+Array.from(spec.edges.find(a=>a.id===e.id)?.label??'').length*9:0))+padding;
+ return {diagram_type:'flowchart',direction:'RIGHT',width,height,nodes,edges};
 }

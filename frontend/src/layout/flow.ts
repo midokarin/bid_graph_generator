@@ -1,22 +1,33 @@
 import type { ElkNode } from 'elkjs/lib/elk-api';
 import type { FlowchartSpec, FlowLayout } from '../domain/generated/ProjectFile';
-export const TEXT_LIMITS = { flow: 60, task: 60, line: 12, lines: 5 } as const;
-export function wrapText(text:string){
+export const TEXT_LIMITS = { flow: 60, task: 60, line: 12, lines: 5, horizontalLine: 8, horizontalLines: 8 } as const;
+export function wrapText(text:string, lineLength:number=TEXT_LIMITS.line){
   const lines:string[]=[];
   for(const paragraph of text.split(/\r?\n/u)){
     const chars=Array.from(paragraph);
     if(!chars.length)lines.push('');
-    for(let i=0;i<chars.length;i+=TEXT_LIMITS.line)lines.push(chars.slice(i,i+TEXT_LIMITS.line).join(''));
+    for(let i=0;i<chars.length;i+=lineLength)lines.push(chars.slice(i,i+lineLength).join(''));
   }
   return lines;
+}
+export function flowLines(text:string,direction:FlowchartSpec['direction'],geometry?:{width:number},type?:string){
+  // Read wrapping from saved geometry too: existing wide snapshots retain their text flow.
+  const capacity=geometry?Math.min(12,Math.max(1,Math.floor(geometry.width/(type==='decision'?40:26)))):TEXT_LIMITS.horizontalLine;
+  return wrapText(text,direction==='RIGHT'?capacity:TEXT_LIMITS.line);
+}
+export function nodeSize(node:FlowchartSpec['nodes'][number],direction:FlowchartSpec['direction']){
+  const lines=flowLines(node.text,direction),length=Math.max(...lines.map(line=>Array.from(line).length));
+  if(direction==='RIGHT')return {width:node.type==='decision'?Math.max(184,length*40+32):Math.max(132,length*26+28),
+    height:node.type==='decision'?Math.max(124,lines.length*52+60):Math.max(76,lines.length*28+32)};
+  return {width:node.type==='decision'?Math.max(300,Math.min(12,Array.from(node.text).length)*40+16):320,
+    height:node.type==='decision'?Math.max(148,lines.length*52+60):Math.max(68,lines.length*28+32)};
 }
 export function flowGraph(spec: FlowchartSpec): ElkNode {
   return {id:'root', layoutOptions:{'elk.algorithm':'layered','elk.direction':spec.direction,
     'elk.edgeRouting':'ORTHOGONAL','elk.padding':'[top=35,left=35,bottom=35,right=35]',
     'elk.layered.spacing.nodeNodeBetweenLayers':'65','elk.spacing.nodeNode':'55',
     'elk.layered.considerModelOrder.strategy':'NODES_AND_EDGES'},
-    children:spec.nodes.map(n=>({id:n.id,width:n.type==='decision'?Math.max(300,Math.min(12,Array.from(n.text).length)*40+16):320,
-      height:n.type==='decision'?Math.max(148,wrapText(n.text).length*52+60):Math.max(68,wrapText(n.text).length*28+32)})),
+    children:spec.nodes.map(n=>({id:n.id,...nodeSize(n,spec.direction)})),
     edges:spec.edges.map(e=>({id:e.id,sources:[e.source],targets:[e.target],
       labels:e.label?[{text:e.label,width:Math.max(25,e.label.length*18),height:24}]:[]}))};
 }

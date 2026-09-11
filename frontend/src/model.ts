@@ -1,5 +1,5 @@
 import type {VersionSnapshot,Style,FlowLayout,FlowEdge} from './domain/generated/ProjectFile';
-import {TEXT_LIMITS,wrapText} from './layout/flow';
+import {TEXT_LIMITS,wrapText,flowLines} from './layout/flow';
 export type Kind='flowchart'|'gantt';
 export type Appearance={fontFamily:string;textColor:string;strokeColor:string;backgroundColor:string;fillColor:string;strokeWidth:number;cornerRadius:number};
 export const FONTS=['sans-serif','Arial','宋体','黑体','微软雅黑','PingFang SC'];
@@ -66,10 +66,10 @@ export function assertReadable(version:VersionSnapshot){
  if(version.spec.diagram_type==='flowchart'&&version.layout.diagram_type==='flowchart'){
   for(const node of version.spec.nodes){
    const geometry=version.layout.nodes.find(n=>n.id===node.id)!;
-   const lines=wrapText(node.text);
+   const lines=flowLines(node.text,version.spec.direction,geometry,node.type);
    const height=geometry.height*(node.type==='decision'?.55:.85);
    const width=geometry.width*(node.type==='decision'?.55:.85);
-   if(node.text.length>TEXT_LIMITS.flow||lines.length>TEXT_LIMITS.lines||lines.length*font*1.25>height||Math.min(12,node.text.length)*font>width)throw new Error('节点文字超出可读范围，请精简文字或减小全局字号。');
+   if(node.text.length>TEXT_LIMITS.flow||lines.length>(version.spec.direction==='RIGHT'?TEXT_LIMITS.horizontalLines:TEXT_LIMITS.lines)||lines.length*font*1.25>height||Math.max(...lines.map(line=>Array.from(line).length))*font>width)throw new Error('节点文字超出可读范围，请精简文字或减小全局字号。');
   }
  }else if(version.spec.diagram_type==='gantt'){
   if(version.spec.tasks.some(t=>t.text.length>TEXT_LIMITS.task||wrapText(t.text).length*font*1.1>70||Math.min(12,t.text.length)*font>190))throw new Error('任务文字超出可读范围，请精简文字或减小全局字号。');

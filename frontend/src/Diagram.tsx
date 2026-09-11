@@ -1,7 +1,7 @@
 import {useId,useRef,useState} from 'react';
 import type {Snapshot,Proposal} from './model';
 import {moved} from './model';
-import {TEXT_LIMITS,wrapText} from './layout/flow';
+import {TEXT_LIMITS,wrapText,flowLines} from './layout/flow';
 import type {NodeGeometry} from './domain/generated/ProjectFile';
 export function Diagram({snapshot:s,svgRef,onPropose,locked=false}:{snapshot:Snapshot;svgRef?:React.Ref<SVGSVGElement>;onPropose?:(p:Proposal)=>void;locked?:boolean}){
  const {spec,style}=s.version; const a=s.appearance, font=s.fontSize*(spec.diagram_type==='flowchart'?1.8:1.4), arrow=useId();
@@ -31,7 +31,7 @@ export function Diagram({snapshot:s,svgRef,onPropose,locked=false}:{snapshot:Sna
  <rect width="100%" height="100%" fill={background}/><defs><marker id={arrow} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill={a.strokeColor}/></marker></defs>
  {spec.diagram_type==='flowchart'&&layout.diagram_type==='flowchart'?<>
  {layout.edges.map(edge=><g key={edge.id} data-edge-id={edge.id} data-kind={spec.edges.find(e=>e.id===edge.id)?.kind}>{line(path(edge.points))}{edge.label_position&&<text x={edge.label_position.x} y={edge.label_position.y} textAnchor="middle" fontSize={font*.82}>{spec.edges.find(e=>e.id===edge.id)?.label}</text>}</g>)}
- {layout.nodes.map(node=>{const n=spec.nodes.find(n=>n.id===node.id)!;const {x,y,width:w,height:h}=node;const lines=wrapText(n.text);return <g key={n.id} data-node-id={n.id} data-node-type={n.type} role={onPropose&&!locked?'button':undefined} tabIndex={onPropose&&!locked?0:undefined} aria-label={onPropose&&!locked?`${n.text}，双击编辑，拖动调整位置`:n.text} onDoubleClick={()=>startEdit(n.id,n.text)} onKeyDown={e=>{if(e.key==='Enter')startEdit(n.id,n.text)}} onPointerDown={e=>down(e,node)} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{dragRef.current=null;setDrag(null)}} style={{cursor:onPropose&&!locked?'move':'default',touchAction:'none'}}>
+ {layout.nodes.map(node=>{const n=spec.nodes.find(n=>n.id===node.id)!;const {x,y,width:w,height:h}=node;const lines=flowLines(n.text,spec.direction,node,n.type);return <g key={n.id} data-node-id={n.id} data-node-type={n.type} role={onPropose&&!locked?'button':undefined} tabIndex={onPropose&&!locked?0:undefined} aria-label={onPropose&&!locked?`${n.text}，双击编辑，拖动调整位置`:n.text} onDoubleClick={()=>startEdit(n.id,n.text)} onKeyDown={e=>{if(e.key==='Enter')startEdit(n.id,n.text)}} onPointerDown={e=>down(e,node)} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{dragRef.current=null;setDrag(null)}} style={{cursor:onPropose&&!locked?'move':'default',touchAction:'none'}}>
  {n.type==='decision'?<polygon points={`${x+w/2},${y} ${x+w},${y+h/2} ${x+w/2},${y+h} ${x},${y+h/2}`} {...shapeStyle}/>:n.type==='document'?<path d={`M${x} ${y} H${x+w} V${y+h-12} C${x+w*.65} ${y+h-32},${x+w*.35} ${y+h+12},${x} ${y+h-12} Z`} {...shapeStyle}/>:<rect x={x} y={y} width={w} height={h} rx={n.type==='start'||n.type==='end'?h/2:a.cornerRadius} {...shapeStyle}/>}
  {n.type==='subprocess'&&<path d={`M${x+12} ${y} V${y+h} M${x+w-12} ${y} V${y+h}`} fill="none" stroke={a.strokeColor} strokeWidth={a.strokeWidth}/>}
  <g fill={a.textColor} style={{userSelect:'none',pointerEvents:'none'}}>{lines.map((text,i)=><text key={i} x={x+w/2} y={y+h/2+font*.33+(i-(lines.length-1)/2)*font*1.25} textAnchor="middle" fontSize={font} xmlSpace="preserve">{text}</text>)}</g>
