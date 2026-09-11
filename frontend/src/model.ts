@@ -1,5 +1,6 @@
 import type {VersionSnapshot,Style,FlowLayout,FlowEdge} from './domain/generated/ProjectFile';
-import {TEXT_LIMITS,wrapText,flowLines} from './layout/flow';
+import {TEXT_LIMITS,flowLines} from './layout/flow';
+import {GANTT_TEXT,ganttText} from './layout/gantt';
 import {edgePort,routePorts,relocateLabel} from './layout/connectors';
 export type Kind='flowchart'|'gantt';
 export type Appearance={fontFamily:string;textColor:string;strokeColor:string;backgroundColor:string;fillColor:string;strokeWidth:number;cornerRadius:number;fontWeight:400|600|700;borderStyle:'solid'|'dashed';nodeAccent:'none'|'top'|'left';ganttBarStyle:'solid'|'outline'|'hatched';ganttGrid:'full'|'rows'|'banded'};
@@ -74,6 +75,9 @@ export function assertReadable(version:VersionSnapshot){
    if(node.text.length>TEXT_LIMITS.flow||lines.length>(version.spec.direction==='RIGHT'?TEXT_LIMITS.horizontalLines:TEXT_LIMITS.lines)||lines.length*font*1.25>height||Math.max(...lines.map(line=>Array.from(line).length))*font>width)throw new Error('节点文字超出可读范围，请精简文字或减小全局字号。');
   }
  }else if(version.spec.diagram_type==='gantt'){
-  if(version.spec.tasks.some(t=>t.text.length>TEXT_LIMITS.task||wrapText(t.text).length*font*1.1>70||Math.min(12,t.text.length)*font>190))throw new Error('任务文字超出可读范围，请精简文字或减小全局字号。');
+  for(const task of version.spec.tasks){
+   const text=ganttText(task.text,version.style.font_size);
+   if(task.text.length>TEXT_LIMITS.task||text.height>GANTT_TEXT.height||text.width>GANTT_TEXT.width)throw new Error('任务文字超出可读范围，请精简文字或减小全局字号。');
+  }
  }
 }

@@ -1,8 +1,8 @@
 import {useId,useMemo,useRef,useState} from 'react';
 import type {Snapshot,Proposal} from './model';
 import {moved} from './model';
-import {TEXT_LIMITS,wrapText,flowLines} from './layout/flow';
-import {ganttDependencies,timeX,taskY} from './layout/gantt';
+import {TEXT_LIMITS,flowLines} from './layout/flow';
+import {GANTT_TEXT,ganttText,ganttDependencies,timeX,taskY} from './layout/gantt';
 import type {NodeGeometry} from './domain/generated/ProjectFile';
 export function Diagram({snapshot:s,svgRef,onPropose,locked=false}:{snapshot:Snapshot;svgRef?:React.Ref<SVGSVGElement>;onPropose?:(p:Proposal)=>void;locked?:boolean}){
  const {spec,style}=s.version; const a=s.appearance, font=s.fontSize*(spec.diagram_type==='flowchart'?1.8:1.4), arrow=useId(), hatch=useId();
@@ -47,8 +47,8 @@ export function Diagram({snapshot:s,svgRef,onPropose,locked=false}:{snapshot:Sna
  {Array.from({length:7},(_,i)=>i*total/6).map((n,i)=><g key={i}>{a.ganttGrid==='full'&&<line x1={tx(n)} y1={65} x2={tx(n)} y2={layout.height-88} stroke="#dddddd"/>}<text x={tx(n)} y={43} textAnchor="middle" fontSize={15}>{i===0?'起点':`${Number(n.toFixed(2))}${unit}`}</text></g>)}
  {layout.tasks.map(t=><line key={t.id} x1="30" x2="840" y1={rowY(t.row)-36} y2={rowY(t.row)-36} stroke="#dddddd"/>)}
  {dependencies.map((d,i)=><g key={d.id} data-dependency-id={d.id}>{line(path(d.points),true,dependencies.findIndex(other=>other.target===d.target)===i)}</g>)}
- {layout.tasks.map(t=>{const task=spec.tasks.find(n=>n.id===t.id)!;const y=rowY(t.row);return <g key={t.id} data-task-id={t.id} data-start={t.start} data-end={t.end}>
- <text x="35" y={y+11} fontSize={font} role={onPropose&&!locked?'button':undefined} tabIndex={onPropose&&!locked?0:undefined} aria-label={`编辑任务：${task.text}`} onDoubleClick={()=>startEdit(task.id,task.text,true)} onKeyDown={e=>{if(e.key==='Enter')startEdit(task.id,task.text,true)}} style={{cursor:onPropose&&!locked?'text':'default'}}>{wrapText(task.text).map((text,i)=><tspan key={i} x={35} dy={i?font*1.1:-(wrapText(task.text).length-1)*font*.5}>{text}</tspan>)}</text>
+ {layout.tasks.map(t=>{const task=spec.tasks.find(n=>n.id===t.id)!;const y=rowY(t.row),label=ganttText(task.text,s.fontSize);return <g key={t.id} data-task-id={t.id} data-start={t.start} data-end={t.end}>
+ <text x={GANTT_TEXT.x} y={y+11} fontSize={label.font} role={onPropose&&!locked?'button':undefined} tabIndex={onPropose&&!locked?0:undefined} aria-label={`编辑任务：${task.text}`} onDoubleClick={()=>startEdit(task.id,task.text,true)} onKeyDown={e=>{if(e.key==='Enter')startEdit(task.id,task.text,true)}} style={{cursor:onPropose&&!locked?'text':'default'}}>{label.lines.map((text,i)=><tspan key={i} x={GANTT_TEXT.x} dy={i?label.lineHeight:-(label.lines.length-1)*label.lineHeight/2}>{text}</tspan>)}</text>
  <text x="235" y={y+11} fontSize="17">{task.duration} {unit}</text>
  {task.kind==='milestone'?<path d={`M${tx(t.start)} ${y-9} l9 9 -9 9 -9 -9 z`} fill={a.strokeColor}/>:<rect x={tx(t.start)} y={y-14} width={Math.max(1,tx(t.end)-tx(t.start))} height={28} rx={a.cornerRadius} {...shapeStyle} data-bar-style={a.ganttBarStyle} fill={a.ganttBarStyle==='hatched'?`url(#${hatch})`:a.ganttBarStyle==='outline'?'none':a.fillColor}/>}
  {editing?.task&&editing.id===task.id&&input(30,y-16,195)}</g>})}
