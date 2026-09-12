@@ -167,6 +167,12 @@
 .bid-graph .task-navigation{min-height:150px}
 .bid-graph .product-sidebar{overflow-y:auto}
 .bid-graph .task-list{flex-shrink:0;max-height:38vh}
+/* Reserve space for the hint and settings; only task rows consume spare height. */
+.bid-graph .product-sidebar>.project-entry,.bid-graph .product-sidebar>.sidebar-kicker,.bid-graph .product-sidebar>.module-entry{flex-shrink:0}
+.bid-graph .product-sidebar .task-navigation{min-height:230px}
+.bid-graph .product-sidebar .task-section-heading,.bid-graph .product-sidebar .task-list-hint{flex-shrink:0}
+.bid-graph .product-sidebar .task-list{flex:1 1 auto;max-height:none}
+.bid-graph .product-sidebar .task-row{flex-shrink:0}
 .bid-graph .template-card.selected{box-shadow:0 0 0 1px var(--brand)}
 .bid-graph .run-stream,.bid-graph .run-stream-head,.bid-graph .run-stream-body,.bid-graph .run-log,.bid-graph .run-json-output{background:var(--surface);color:var(--muted);border-color:var(--border)}
 .bid-graph .run-json-output pre{background:var(--surface-2);color:var(--text-strong)}
