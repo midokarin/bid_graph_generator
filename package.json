@@ -6,6 +6,7 @@
   "workspaces": ["frontend"],
   "engines": {"node": ">=22.12.0"},
   "scripts": {
+    "start": "python3 scripts/manage.py start",
     "dev": "npm run dev --workspace frontend",
     "backend": "python3 scripts/manage.py backend",
     "contracts": "python3 scripts/manage.py contracts",

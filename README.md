@@ -22,7 +22,17 @@ python -m venv .venv
 npm ci
 ```
 
-两个终端分别运行：
+推荐在一个终端同时启动前后端（后端就绪后才启动页面；按 Ctrl+C 同时停止）：
+
+```sh
+npm start
+```
+
+保持这个终端运行。`npm run dev` 只启动页面，单独运行时生成和模型设置不可用。
+Windows 若没有 `python3` 别名，使用 `python scripts/manage.py start`。
+若已有服务占用端口，先关闭原启动终端，或使用 `BIAOSHU_API_PORT=8010 BIAOSHU_WEB_PORT=5174 npm start`。
+
+开发时也可以在两个终端分别运行：
 
 ```sh
 npm run backend

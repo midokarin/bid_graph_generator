@@ -1,9 +1,15 @@
 import type { GenerationRequest } from '../domain/generated/GenerationRequest';
 
-async function read<T>(response: Response): Promise<T> {
+async function read<T>(response: Response, settings = false): Promise<T> {
+  const body = await response.json().catch(() => null);
   if (!response.ok) {
+    if (response.status >= 500) {
+      throw new Error(`本地服务暂不可用（${response.status}）。请确认后端已启动，或在项目目录运行 npm start 同时启动前后端；使用自定义端口时，两端的 BIAOSHU_API_PORT 必须一致。`);
+    }
+    if (settings) {
+      throw new Error(typeof body?.detail === 'string' ? body.detail : '配置未保存，请检查接口地址、模型名和密钥后重试。');
+    }
     if (response.status === 422) {
-      const body = await response.json().catch(() => null);
       const issues: {loc?: unknown; type?: unknown}[] = Array.isArray(body?.detail)
         ? body.detail.filter((item: unknown) => item !== null && typeof item === 'object') : [];
       const field = (issue: typeof issues[number], name: string) => Array.isArray(issue.loc) && issue.loc.includes(name);
@@ -17,8 +23,17 @@ async function read<T>(response: Response): Promise<T> {
     }
     throw new Error(`本地服务返回 ${response.status}`);
   }
-  return response.json() as Promise<T>;
+  if (body === null || typeof body !== 'object') {
+    throw new Error('本地服务返回了空内容或无效数据，请确认前后端端口配置一致，重启程序后重试。');
+  }
+  return body as T;
 }
+
+export type ModelConfiguration = {base_url: string; model: string; has_api_key: boolean};
+export const getModelSettings = () => fetch('/api/v1/settings').then(response => read<ModelConfiguration>(response, true));
+export const saveModelSettings = (body: {base_url: string; model: string; api_key: string}) => fetch('/api/v1/settings', {
+  method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+}).then(response => read<ModelConfiguration>(response, true));
 
 export const getHealth = (signal?: AbortSignal) => fetch('/api/v1/health', { signal }).then(response => read<{status: string; provider: string; contract_version: string}>(response));
 export const createGeneration = (body: GenerationRequest) => fetch('/api/v1/generations', {
